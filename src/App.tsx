@@ -1,35 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { EnemyList, type Enemy}  from "./components/EnemyList";
+import { type DamageEffect, AttackPanel  } from "./components/AttackPanel";
+import ActionLog from "./components/ActionLog";
+
+const baseDamageMap: Record<DamageEffect, number> = {
+  fire: 30,
+  burn: 5,
+  scorch: 10,
+  inferno: 20,
+  pyroclasm: 50,
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [enemies, setEnemies] = useState<Enemy[]>([
+    { id: 1, name: "Goblin", hp: 100 },
+    { id: 2, name: "Orc", hp: 150 },
+    { id: 3, name: "Dragon Whelp", hp: 200 },
+  ]);
+  const [selectedEnemy, setSelectedEnemy] = useState<Enemy | null>(null);
+  const [log, setLog] = useState<string[]>([]);
+
+  const useAttack = (effect: DamageEffect) => {
+    if (!selectedEnemy) {
+      setLog((prev) => [...prev, "No enemy selected!"]);
+      return;
+    }
+
+    const damage = baseDamageMap[effect];
+    setEnemies((prev) =>
+      prev.map((e) =>
+        e.id === selectedEnemy.id ? { ...e, hp: Math.max(0, e.hp - damage) } : e
+      )
+    );
+    setLog((prev) => [
+      ...prev,
+      `Used ${effect.toUpperCase()} on ${selectedEnemy.name} for ${damage} damage.`,
+    ]);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="p-6 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+      <EnemyList enemies={enemies} selected={selectedEnemy} onSelect={setSelectedEnemy} />
+      <AttackPanel onAttack={useAttack} />
+      <ActionLog log={log} />
+    </div>
+  );
 }
 
-export default App
+export default App;
