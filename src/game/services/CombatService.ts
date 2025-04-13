@@ -1,4 +1,4 @@
-import { Enemy } from '../models/Enemy';
+import { Enemy, EnemyTier } from '../models/Enemy';
 import { DamageEffect } from '../models/DamageEffect';
 import { BASE_DAMAGE, STATUS_EFFECTS } from '../constants/DamageValues';
 import { capitalize } from '../../utils';
@@ -161,22 +161,41 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
 }
 
 /**
- * Creates initial enemies for the game
+ * Enemy registry with details for all potential enemy types by tier
  */
-export function createInitialEnemies(): Enemy[] {
-  return [
-    { id: 1, name: 'Goblin', hp: 100, burnStacks: 0, isDead: false },
-    { id: 2, name: 'Orc', hp: 150, burnStacks: 0, isDead: false },
-    { id: 3, name: 'Dragon Whelp', hp: 200, burnStacks: 0, isDead: false },
-  ];
-}
-
-/**
- * Checks if all enemies have been defeated
- */
-export function areAllEnemiesDefeated(enemies: Enemy[]): boolean {
-  return enemies.every(enemy => enemy.isDead);
-}
+const ENEMY_REGISTRY = {
+  fodder: [
+    { name: 'Imp', baseHp: 50 },
+    { name: 'Kobold', baseHp: 60 },
+    { name: 'Fire Sprite', baseHp: 45 },
+    { name: 'Ember Rat', baseHp: 40 },
+    { name: 'Cinder Bug', baseHp: 35 },
+    { name: 'Ash Elemental', baseHp: 55 },
+  ],
+  medium: [
+    { name: 'Goblin', baseHp: 100 },
+    { name: 'Orc', baseHp: 150 },
+    { name: 'Fire Elemental', baseHp: 130 },
+    { name: 'Magma Hound', baseHp: 140 },
+    { name: 'Flame Cultist', baseHp: 110 },
+    { name: 'Lava Guardian', baseHp: 160 },
+  ],
+  elite: [
+    { name: 'Dragon Whelp', baseHp: 250 },
+    { name: 'Stone Golem', baseHp: 300 },
+    { name: 'Flame Titan', baseHp: 280 },
+    { name: 'Inferno Mage', baseHp: 240 },
+    { name: 'Molten Giant', baseHp: 320 },
+    { name: 'Hellhound', baseHp: 260 },
+  ],
+  boss: [
+    { name: 'Drakorath the Scorcher', baseHp: 500 },
+    { name: 'Pyromus the Incinerator', baseHp: 550 },
+    { name: 'Cinereus, Lord of Ash', baseHp: 600 },
+    { name: 'Emberstrike the Infernal', baseHp: 650 },
+    { name: 'Vulkaris the Molten King', baseHp: 700 },
+  ],
+};
 
 /**
  * Current wave number
@@ -184,43 +203,146 @@ export function areAllEnemiesDefeated(enemies: Enemy[]): boolean {
 let currentWave = 1;
 
 /**
+ * Determines if a wave should be a boss wave
+ */
+function isBossWave(wave: number): boolean {
+  // Every fifth wave is a boss wave
+  return wave % 5 === 0 && wave > 0;
+}
+
+/**
  * Generates enemies for a specific wave
  */
 export function generateWaveEnemies(wave: number): Enemy[] {
-  // Adjust enemy difficulty based on wave number
+  // Base values for scaling
   const baseHP = 100;
   const hpMultiplier = 1 + (wave - 1) * 0.5; // Increase HP by 50% per wave
-  const count = Math.min(3 + Math.floor((wave - 1) / 2), 6); // Add more enemies in later waves, max 6
 
+  // Generate enemies based on wave characteristics
+  if (isBossWave(wave)) {
+    return generateBossWave(wave, hpMultiplier);
+  } else {
+    return generateStandardWave(wave, hpMultiplier);
+  }
+}
+
+/**
+ * Generates a standard enemy wave
+ */
+function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
   const enemies: Enemy[] = [];
-  const enemyTypes = [
-    { name: 'Goblin', baseHp: baseHP },
-    { name: 'Orc', baseHp: baseHP * 1.5 },
-    { name: 'Dragon Whelp', baseHp: baseHP * 2 },
-    { name: 'Fire Elemental', baseHp: baseHP * 1.8 },
-    { name: 'Shadow Fiend', baseHp: baseHP * 1.7 },
-    { name: 'Stone Golem', baseHp: baseHP * 2.5 },
-  ];
+  const timeNow = Date.now();
 
-  // Add enemies based on wave number
-  for (let i = 0; i < count; i++) {
-    // Cycle through enemy types, with more variety in later waves
-    const availableTypes = Math.min(
-      enemyTypes.length,
-      3 + Math.floor(wave / 2)
-    );
-    const typeIndex = i % availableTypes;
-    const enemyType = enemyTypes[typeIndex];
+  // Determine enemy count and distribution
+  const totalEnemies = Math.min(3 + Math.floor((wave - 1) / 2), 8); // Max 8 enemies per wave
 
-    const hp = Math.round(enemyType.baseHp * hpMultiplier);
-    const id = Date.now() + i; // Use timestamp + index to ensure unique IDs
+  // Calculate distribution of enemy types based on wave
+  let eliteCount = Math.min(Math.floor(wave / 3), 2); // Max 2 elites per standard wave
+  let mediumCount = Math.min(Math.floor(wave / 2) + 1, 3); // More medium enemies as waves progress
+  let fodderCount = totalEnemies - eliteCount - mediumCount;
 
+  // Add fodder enemies
+  for (let i = 0; i < fodderCount; i++) {
+    const randomFodder =
+      ENEMY_REGISTRY.fodder[
+        Math.floor(Math.random() * ENEMY_REGISTRY.fodder.length)
+      ];
+    const hp = Math.round(randomFodder.baseHp * hpMultiplier);
     enemies.push({
-      id,
-      name: enemyType.name + (wave > 1 ? ` (Wave ${wave})` : ''),
+      id: timeNow + enemies.length,
+      name: randomFodder.name,
       hp,
       burnStacks: 0,
       isDead: false,
+      tier: 'fodder' as EnemyTier,
+    });
+  }
+
+  // Add medium enemies
+  for (let i = 0; i < mediumCount; i++) {
+    const randomMedium =
+      ENEMY_REGISTRY.medium[
+        Math.floor(Math.random() * ENEMY_REGISTRY.medium.length)
+      ];
+    const hp = Math.round(randomMedium.baseHp * hpMultiplier);
+    enemies.push({
+      id: timeNow + enemies.length,
+      name: randomMedium.name,
+      hp,
+      burnStacks: 0,
+      isDead: false,
+      tier: 'medium' as EnemyTier,
+    });
+  }
+
+  // Add elite enemies
+  for (let i = 0; i < eliteCount; i++) {
+    const randomElite =
+      ENEMY_REGISTRY.elite[
+        Math.floor(Math.random() * ENEMY_REGISTRY.elite.length)
+      ];
+    const hp = Math.round(randomElite.baseHp * hpMultiplier);
+    enemies.push({
+      id: timeNow + enemies.length,
+      name: randomElite.name + ' (Elite)',
+      hp,
+      burnStacks: 0,
+      isDead: false,
+      tier: 'elite' as EnemyTier,
+    });
+  }
+
+  // Tag enemies with wave number if beyond wave 1
+  if (wave > 1) {
+    enemies.forEach(enemy => {
+      enemy.name = enemy.name + ` (Wave ${wave})`;
+    });
+  }
+
+  return enemies;
+}
+
+/**
+ * Generates a boss wave
+ */
+function generateBossWave(wave: number, hpMultiplier: number): Enemy[] {
+  const enemies: Enemy[] = [];
+  const timeNow = Date.now();
+
+  // Select boss (cycle through available bosses)
+  const bossIndex = Math.floor(wave / 5) % ENEMY_REGISTRY.boss.length;
+  const boss = ENEMY_REGISTRY.boss[bossIndex];
+
+  // Calculate boss HP with extra scaling for boss waves
+  const bossHp = Math.round(boss.baseHp * hpMultiplier * 1.2);
+
+  // Add the boss
+  enemies.push({
+    id: timeNow,
+    name: boss.name,
+    hp: bossHp,
+    burnStacks: 0,
+    isDead: false,
+    tier: 'boss' as EnemyTier,
+  });
+
+  // Add some fodder minions to accompany the boss
+  const minionCount = Math.min(2 + Math.floor(wave / 5), 4); // More minions in higher waves
+
+  for (let i = 0; i < minionCount; i++) {
+    // Alternate between fodder and medium tiers for minions
+    const tier = i % 2 === 0 ? 'fodder' : 'medium';
+    const registry =
+      tier === 'fodder' ? ENEMY_REGISTRY.fodder : ENEMY_REGISTRY.medium;
+    const randomMinion = registry[Math.floor(Math.random() * registry.length)];
+
+    enemies.push({
+      id: timeNow + i + 1,
+      name: `${randomMinion.name} Minion`,
+      hp: Math.round(randomMinion.baseHp * hpMultiplier * 0.8), // Minions are slightly weaker
+      burnStacks: 0,
+      isDead: false,
+      tier: tier as EnemyTier,
     });
   }
 
@@ -242,30 +364,81 @@ export function spawnNextWave(): { enemies: Enemy[]; waveNumber: number } {
  * Spawns a random single enemy (for manual addition)
  */
 export function spawnRandomEnemy(): Enemy {
-  const enemyTypes = [
-    { name: 'Goblin', hp: 100 },
-    { name: 'Orc', hp: 150 },
-    { name: 'Dragon Whelp', hp: 200 },
-    { name: 'Fire Elemental', hp: 180 },
-    { name: 'Shadow Fiend', hp: 170 },
-    { name: 'Stone Golem', hp: 250 },
-  ];
+  // Determine enemy tier with weighted probability
+  const tierRoll = Math.random();
+  let tier: EnemyTier;
 
-  // Pick a random enemy type
-  const randomType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+  if (tierRoll < 0.5) {
+    tier = 'fodder';
+  } else if (tierRoll < 0.85) {
+    tier = 'medium';
+  } else if (tierRoll < 0.98) {
+    tier = 'elite';
+  } else {
+    tier = 'boss';
+  }
 
-  // Apply some randomness to HP
+  // Get registry for selected tier
+  const registry = ENEMY_REGISTRY[tier];
+
+  // Select random enemy from tier
+  const randomEnemy = registry[Math.floor(Math.random() * registry.length)];
+
+  // Apply some randomness to HP based on current wave
+  const baseHp = randomEnemy.baseHp;
+  const waveMultiplier = 1 + (currentWave - 1) * 0.3; // Less scaling than normal waves
   const hpVariance = 0.2; // 20% variance
-  const baseHp = randomType.hp;
   const randomHp = Math.round(
-    baseHp * (1 - hpVariance / 2 + Math.random() * hpVariance)
+    baseHp * waveMultiplier * (1 - hpVariance / 2 + Math.random() * hpVariance)
   );
 
   return {
     id: Date.now(),
-    name: randomType.name,
+    name:
+      randomEnemy.name +
+      (tier === 'elite' ? ' (Elite)' : tier === 'boss' ? '' : ''),
     hp: randomHp,
     burnStacks: 0,
     isDead: false,
+    tier,
   };
+}
+
+/**
+ * Creates initial enemies for the game
+ */
+export function createInitialEnemies(): Enemy[] {
+  return [
+    {
+      id: 1,
+      name: 'Kobold',
+      hp: 60,
+      burnStacks: 0,
+      isDead: false,
+      tier: 'fodder',
+    },
+    {
+      id: 2,
+      name: 'Goblin',
+      hp: 100,
+      burnStacks: 0,
+      isDead: false,
+      tier: 'medium',
+    },
+    {
+      id: 3,
+      name: 'Dragon Whelp',
+      hp: 200,
+      burnStacks: 0,
+      isDead: false,
+      tier: 'elite',
+    },
+  ];
+}
+
+/**
+ * Checks if all enemies have been defeated
+ */
+export function areAllEnemiesDefeated(enemies: Enemy[]): boolean {
+  return enemies.every(enemy => enemy.isDead);
 }
