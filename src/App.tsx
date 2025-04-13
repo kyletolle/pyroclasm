@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { EnemyList, type Enemy } from './components/EnemyList';
 import { type DamageEffect, AttackPanel } from './components/AttackPanel';
 import ActionLog from './components/ActionLog';
 import { ThemeToggle } from './components/ThemeToggle';
 import { capitalize } from './utils';
+import { useTheme } from './context/ThemeContext';
 
 const baseDamageMap: Record<DamageEffect, number> = {
   fire: 30,
@@ -35,24 +36,9 @@ function App() {
   ]);
   const [selectedEnemy, setSelectedEnemy] = useState<Enemy | null>(null);
   const [log, setLog] = useState<string[]>([]);
-  const [theme, setTheme] = useState(
-    document.documentElement.classList.contains('dark') ? 'dark' : 'light'
-  );
 
-  // Listen for theme changes
-  useEffect(() => {
-    const observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        if (mutation.attributeName === 'class') {
-          const isDark = document.documentElement.classList.contains('dark');
-          setTheme(isDark ? 'dark' : 'light');
-        }
-      });
-    });
-
-    observer.observe(document.documentElement, { attributes: true });
-    return () => observer.disconnect();
-  }, []);
+  // Get theme from context instead of managing it here
+  const { theme } = useTheme();
 
   const useAttack = (effect: DamageEffect) => {
     if (!selectedEnemy) {
@@ -120,30 +106,28 @@ function App() {
   };
 
   return (
-    <div className={`w-full min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+    <div
+      className={`w-full min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
+    >
       <div className="p-6 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex justify-between items-center col-span-1 md:col-span-2">
           <h1 className="text-2xl font-bold">Pyroclasm</h1>
           <ThemeToggle />
         </div>
-        
+
         <EnemyList
           enemies={enemies}
           selected={selectedEnemy}
           onSelect={setSelectedEnemy}
-          theme={theme}
         />
         <div>
-          <AttackPanel 
-            onAttack={useAttack} 
-            theme={theme}
-          />
+          <AttackPanel onAttack={useAttack} />
           <div className="mt-4">
             <button
               onClick={skipTurn}
               className={`w-full px-4 py-2 rounded ${
-                theme === 'dark' 
-                  ? 'bg-gray-700 hover:bg-gray-800 text-white' 
+                theme === 'dark'
+                  ? 'bg-gray-700 hover:bg-gray-800 text-white'
                   : 'bg-gray-600 hover:bg-gray-700 text-white'
               }`}
             >
@@ -151,10 +135,7 @@ function App() {
             </button>
           </div>
         </div>
-        <ActionLog 
-          log={log}
-          theme={theme} 
-        />
+        <ActionLog log={log} />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { capitalize } from '../utils';
+import { useTheme } from '../context/ThemeContext';
 
 export type DamageEffect = 'fire' | 'burn' | 'scorch' | 'inferno' | 'pyroclasm';
 
@@ -12,10 +13,10 @@ const effects: DamageEffect[] = [
 
 interface Props {
   onAttack: (e: DamageEffect) => void;
-  theme: 'light' | 'dark';
 }
 
-export function AttackPanel({ onAttack, theme }: Props) {
+export function AttackPanel({ onAttack }: Props) {
+  const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   return (

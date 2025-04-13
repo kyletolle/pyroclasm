@@ -1,9 +1,11 @@
+import { useTheme } from '../context/ThemeContext';
+
 interface Props {
   log: string[];
-  theme: 'light' | 'dark';
 }
 
-export default function ActionLog({ log, theme }: Props) {
+export default function ActionLog({ log }: Props) {
+  const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   return (

@@ -1,37 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 interface Props {
   className?: string;
 }
 
 export function ThemeToggle({ className = '' }: Props) {
-  // Initialize state from the document class rather than recalculating
-  const [darkMode, setDarkMode] = useState(() => {
-    return document.documentElement.classList.contains('dark');
-  });
-
-  useEffect(() => {
-    // Update the HTML class and localStorage when theme changes
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   return (
     <button
-      onClick={() => setDarkMode(!darkMode)}
+      onClick={toggleTheme}
       className={`p-2 rounded-full transition-colors ${className} ${
-        darkMode
+        isDark
           ? 'bg-gray-800 text-yellow-300 hover:bg-gray-700'
           : 'bg-blue-100 text-gray-800 hover:bg-blue-200'
       }`}
-      aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {darkMode ? (
+      {isDark ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"

@@ -1,3 +1,5 @@
+import { useTheme } from '../context/ThemeContext';
+
 export interface Enemy {
   id: number;
   name: string;
@@ -9,10 +11,10 @@ interface Props {
   enemies: Enemy[];
   selected: Enemy | null;
   onSelect: (e: Enemy) => void;
-  theme: 'light' | 'dark';
 }
 
-export function EnemyList({ enemies, selected, onSelect, theme }: Props) {
+export function EnemyList({ enemies, selected, onSelect }: Props) {
+  const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   return (
