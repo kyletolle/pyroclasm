@@ -5,13 +5,9 @@ interface Props {
 }
 
 export function ThemeToggle({ className = '' }: Props) {
+  // Initialize state from the document class rather than recalculating
   const [darkMode, setDarkMode] = useState(() => {
-    // Check localStorage first, then prefer-color-scheme
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      return savedTheme === 'dark';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return document.documentElement.classList.contains('dark');
   });
 
   useEffect(() => {
