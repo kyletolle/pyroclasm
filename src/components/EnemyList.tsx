@@ -2,6 +2,7 @@ export interface Enemy {
   id: number;
   name: string;
   hp: number;
+  burnStacks: number;
 }
 
 interface Props {
@@ -26,6 +27,11 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
             onClick={() => onSelect(enemy)}
           >
             {enemy.name} (HP: {enemy.hp})
+            {enemy.burnStacks > 0 && (
+              <span className="ml-2 text-orange-600">
+                🔥 {enemy.burnStacks}
+              </span>
+            )}
           </li>
         ))}
       </ul>
