@@ -10,11 +10,14 @@ const effects: DamageEffect[] = [
   'pyroclasm',
 ];
 
-export function AttackPanel({
-  onAttack,
-}: {
+interface Props {
   onAttack: (e: DamageEffect) => void;
-}) {
+  theme: 'light' | 'dark';
+}
+
+export function AttackPanel({ onAttack, theme }: Props) {
+  const isDark = theme === 'dark';
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-2">Attacks</h2>
@@ -22,7 +25,11 @@ export function AttackPanel({
         {effects.map(effect => (
           <button
             key={effect}
-            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-800 text-white px-4 py-2 rounded"
+            className={`text-white px-4 py-2 rounded ${
+              isDark
+                ? 'bg-orange-700 hover:bg-orange-800'
+                : 'bg-orange-600 hover:bg-orange-700'
+            }`}
             onClick={() => onAttack(effect)}
           >
             {capitalize(effect)}

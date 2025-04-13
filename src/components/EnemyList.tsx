@@ -9,9 +9,12 @@ interface Props {
   enemies: Enemy[];
   selected: Enemy | null;
   onSelect: (e: Enemy) => void;
+  theme: 'light' | 'dark';
 }
 
-export function EnemyList({ enemies, selected, onSelect }: Props) {
+export function EnemyList({ enemies, selected, onSelect, theme }: Props) {
+  const isDark = theme === 'dark';
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-2">Enemies</h2>
@@ -21,14 +24,20 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
             key={enemy.id}
             className={`p-2 border rounded cursor-pointer ${
               selected?.id === enemy.id
-                ? 'bg-red-200 border-red-500 dark:bg-red-900 dark:border-red-500'
-                : 'bg-white dark:bg-gray-800 dark:border-gray-700'
+                ? isDark
+                  ? 'bg-red-900 border-red-500'
+                  : 'bg-red-200 border-red-500'
+                : isDark
+                  ? 'bg-gray-800 border-gray-700'
+                  : 'bg-white border-gray-300'
             }`}
             onClick={() => onSelect(enemy)}
           >
             {enemy.name} (HP: {enemy.hp})
             {enemy.burnStacks > 0 && (
-              <span className="ml-2 text-orange-600 dark:text-orange-400">
+              <span
+                className={`ml-2 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}
+              >
                 🔥 {enemy.burnStacks}
               </span>
             )}

@@ -120,28 +120,30 @@ function App() {
   };
 
   return (
-    <div
-      className={`w-full min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
-    >
+    <div className={`w-full min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
       <div className="p-6 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex justify-between items-center col-span-1 md:col-span-2">
           <h1 className="text-2xl font-bold">Pyroclasm</h1>
           <ThemeToggle />
         </div>
-
+        
         <EnemyList
           enemies={enemies}
           selected={selectedEnemy}
           onSelect={setSelectedEnemy}
+          theme={theme}
         />
         <div>
-          <AttackPanel onAttack={useAttack} />
+          <AttackPanel 
+            onAttack={useAttack} 
+            theme={theme}
+          />
           <div className="mt-4">
             <button
               onClick={skipTurn}
               className={`w-full px-4 py-2 rounded ${
-                theme === 'dark'
-                  ? 'bg-gray-700 hover:bg-gray-800 text-white'
+                theme === 'dark' 
+                  ? 'bg-gray-700 hover:bg-gray-800 text-white' 
                   : 'bg-gray-600 hover:bg-gray-700 text-white'
               }`}
             >
@@ -149,7 +151,10 @@ function App() {
             </button>
           </div>
         </div>
-        <ActionLog log={log} />
+        <ActionLog 
+          log={log}
+          theme={theme} 
+        />
       </div>
     </div>
   );
