@@ -1,4 +1,5 @@
 import { useTheme } from '../context/ThemeContext';
+import { useEffect, useRef } from 'react';
 
 interface Props {
   log: string[];
@@ -7,11 +8,20 @@ interface Props {
 export default function ActionLog({ log }: Props) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const logContainerRef = useRef<HTMLUListElement>(null);
+
+  // Auto-scroll to bottom when log updates
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [log]);
 
   return (
     <div className="col-span-full mt-6">
       <h2 className="text-xl font-bold mb-2">Action Log</h2>
       <ul
+        ref={logContainerRef}
         className={`space-y-1 p-3 rounded h-48 overflow-y-auto ${
           isDark ? 'bg-gray-800' : 'bg-gray-100'
         }`}
