@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EnemyList, type Enemy } from './components/EnemyList';
 import { type DamageEffect, AttackPanel } from './components/AttackPanel';
 import ActionLog from './components/ActionLog';
+import { ThemeToggle } from './components/ThemeToggle';
 import { capitalize } from './utils';
 
 const baseDamageMap: Record<DamageEffect, number> = {
@@ -101,7 +102,12 @@ function App() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="p-6 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 dark:bg-gray-900 dark:text-white min-h-screen">
+      <div className="flex justify-between items-center col-span-1 md:col-span-2">
+        <h1 className="text-2xl font-bold">Pyroclasm</h1>
+        <ThemeToggle />
+      </div>
+
       <EnemyList
         enemies={enemies}
         selected={selectedEnemy}
@@ -112,7 +118,7 @@ function App() {
         <div className="mt-4">
           <button
             onClick={skipTurn}
-            className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+            className="w-full bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800 text-white px-4 py-2 rounded"
           >
             Skip Turn
           </button>

@@ -21,14 +21,14 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
             key={enemy.id}
             className={`p-2 border rounded cursor-pointer ${
               selected?.id === enemy.id
-                ? 'bg-red-200 border-red-500'
-                : 'bg-white'
+                ? 'bg-red-200 border-red-500 dark:bg-red-900 dark:border-red-500'
+                : 'bg-white dark:bg-gray-800 dark:border-gray-700'
             }`}
             onClick={() => onSelect(enemy)}
           >
             {enemy.name} (HP: {enemy.hp})
             {enemy.burnStacks > 0 && (
-              <span className="ml-2 text-orange-600">
+              <span className="ml-2 text-orange-600 dark:text-orange-400">
                 🔥 {enemy.burnStacks}
               </span>
             )}
