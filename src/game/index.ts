@@ -12,4 +12,7 @@ export {
   applyAttack,
   skipTurn,
   createInitialEnemies,
+  areAllEnemiesDefeated,
+  spawnNextWave,
+  spawnRandomEnemy,
 } from './services/CombatService';

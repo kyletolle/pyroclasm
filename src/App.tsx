@@ -4,6 +4,7 @@ import { AttackPanel } from './components/AttackPanel';
 import ActionLog from './components/ActionLog';
 import { ThemeToggle } from './components/ThemeToggle';
 import { AutoTicker } from './components/AutoTicker';
+import { WaveControls } from './components/WaveControls';
 import { useTheme } from './context/ThemeContext';
 import {
   type Enemy,
@@ -11,6 +12,9 @@ import {
   applyAttack,
   skipTurn,
   createInitialEnemies,
+  areAllEnemiesDefeated,
+  spawnNextWave,
+  spawnRandomEnemy,
 } from './game';
 
 function App() {
@@ -20,7 +24,12 @@ function App() {
   const [log, setLog] = useState<string[]>([]);
   const [autoTickEnabled, setAutoTickEnabled] = useState<boolean>(true); // Auto-tick enabled by default
   const [tickSpeed, setTickSpeed] = useState<number>(1000); // milliseconds
+  const [waveNumber, setWaveNumber] = useState<number>(1); // Track the current wave
+  const [autoSpawnWaves, setAutoSpawnWaves] = useState<boolean>(true); // Auto-spawn new waves by default
   const { theme } = useTheme();
+
+  // Check if all enemies are defeated
+  const allEnemiesDefeated = areAllEnemiesDefeated(enemies);
 
   // Auto-ticker interval effect
   useEffect(() => {
@@ -49,6 +58,12 @@ function App() {
         ) {
           setSelectedEnemy(null);
         }
+
+        // Check if all enemies are defeated after this turn
+        const allDefeated = areAllEnemiesDefeated(result.updatedEnemies);
+        if (allDefeated && autoSpawnWaves) {
+          handleNextWave();
+        }
       }, tickSpeed);
     }
 
@@ -58,7 +73,7 @@ function App() {
         clearInterval(intervalId);
       }
     };
-  }, [autoTickEnabled, tickSpeed, enemies, selectedEnemy]); // Re-run effect when these dependencies change
+  }, [autoTickEnabled, tickSpeed, enemies, selectedEnemy, autoSpawnWaves]); // Re-run effect when these dependencies change
 
   const handleAttack = (effect: DamageEffect) => {
     // Use our combat service to handle the attack
@@ -81,6 +96,12 @@ function App() {
       ) {
         setSelectedEnemy(null);
       }
+
+      // Check if all enemies are defeated after this attack
+      const allDefeated = areAllEnemiesDefeated(result.updatedEnemies);
+      if (allDefeated && autoSpawnWaves) {
+        handleNextWave();
+      }
     }
 
     // Ensure auto-tick is enabled when an attack is made
@@ -95,6 +116,26 @@ function App() {
 
   const handleTickSpeedChange = (speed: number) => {
     setTickSpeed(speed);
+  };
+
+  // Handler for spawning next wave
+  const handleNextWave = () => {
+    const { enemies: newEnemies, waveNumber: newWaveNumber } = spawnNextWave();
+    setEnemies(newEnemies);
+    setWaveNumber(newWaveNumber);
+    setLog(prev => [...prev, `Wave ${newWaveNumber} has arrived!`]);
+  };
+
+  // Handler for manually adding a single random enemy
+  const handleAddEnemy = () => {
+    const newEnemy = spawnRandomEnemy();
+    setEnemies(prev => [...prev, newEnemy]);
+    setLog(prev => [...prev, `A ${newEnemy.name} has appeared!`]);
+  };
+
+  // Handler for toggling auto-spawn waves setting
+  const toggleAutoSpawnWaves = () => {
+    setAutoSpawnWaves(prev => !prev);
   };
 
   return (
@@ -115,6 +156,17 @@ function App() {
 
         <div className="flex flex-col gap-4">
           <AttackPanel onAttack={handleAttack} />
+
+          <div className="mt-2">
+            <WaveControls
+              waveNumber={waveNumber}
+              allDefeated={allEnemiesDefeated}
+              onNextWave={handleNextWave}
+              onAddEnemy={handleAddEnemy}
+              autoSpawn={autoSpawnWaves}
+              onToggleAutoSpawn={toggleAutoSpawnWaves}
+            />
+          </div>
 
           <div className="mt-2">
             <AutoTicker

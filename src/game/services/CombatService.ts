@@ -170,3 +170,102 @@ export function createInitialEnemies(): Enemy[] {
     { id: 3, name: 'Dragon Whelp', hp: 200, burnStacks: 0, isDead: false },
   ];
 }
+
+/**
+ * Checks if all enemies have been defeated
+ */
+export function areAllEnemiesDefeated(enemies: Enemy[]): boolean {
+  return enemies.every(enemy => enemy.isDead);
+}
+
+/**
+ * Current wave number
+ */
+let currentWave = 1;
+
+/**
+ * Generates enemies for a specific wave
+ */
+export function generateWaveEnemies(wave: number): Enemy[] {
+  // Adjust enemy difficulty based on wave number
+  const baseHP = 100;
+  const hpMultiplier = 1 + (wave - 1) * 0.5; // Increase HP by 50% per wave
+  const count = Math.min(3 + Math.floor((wave - 1) / 2), 6); // Add more enemies in later waves, max 6
+
+  const enemies: Enemy[] = [];
+  const enemyTypes = [
+    { name: 'Goblin', baseHp: baseHP },
+    { name: 'Orc', baseHp: baseHP * 1.5 },
+    { name: 'Dragon Whelp', baseHp: baseHP * 2 },
+    { name: 'Fire Elemental', baseHp: baseHP * 1.8 },
+    { name: 'Shadow Fiend', baseHp: baseHP * 1.7 },
+    { name: 'Stone Golem', baseHp: baseHP * 2.5 },
+  ];
+
+  // Add enemies based on wave number
+  for (let i = 0; i < count; i++) {
+    // Cycle through enemy types, with more variety in later waves
+    const availableTypes = Math.min(
+      enemyTypes.length,
+      3 + Math.floor(wave / 2)
+    );
+    const typeIndex = i % availableTypes;
+    const enemyType = enemyTypes[typeIndex];
+
+    const hp = Math.round(enemyType.baseHp * hpMultiplier);
+    const id = Date.now() + i; // Use timestamp + index to ensure unique IDs
+
+    enemies.push({
+      id,
+      name: enemyType.name + (wave > 1 ? ` (Wave ${wave})` : ''),
+      hp,
+      burnStacks: 0,
+      isDead: false,
+    });
+  }
+
+  return enemies;
+}
+
+/**
+ * Spawns a new wave of enemies
+ */
+export function spawnNextWave(): { enemies: Enemy[]; waveNumber: number } {
+  currentWave++;
+  return {
+    enemies: generateWaveEnemies(currentWave),
+    waveNumber: currentWave,
+  };
+}
+
+/**
+ * Spawns a random single enemy (for manual addition)
+ */
+export function spawnRandomEnemy(): Enemy {
+  const enemyTypes = [
+    { name: 'Goblin', hp: 100 },
+    { name: 'Orc', hp: 150 },
+    { name: 'Dragon Whelp', hp: 200 },
+    { name: 'Fire Elemental', hp: 180 },
+    { name: 'Shadow Fiend', hp: 170 },
+    { name: 'Stone Golem', hp: 250 },
+  ];
+
+  // Pick a random enemy type
+  const randomType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+
+  // Apply some randomness to HP
+  const hpVariance = 0.2; // 20% variance
+  const baseHp = randomType.hp;
+  const randomHp = Math.round(
+    baseHp * (1 - hpVariance / 2 + Math.random() * hpVariance)
+  );
+
+  return {
+    id: Date.now(),
+    name: randomType.name,
+    hp: randomHp,
+    burnStacks: 0,
+    isDead: false,
+  };
+}
