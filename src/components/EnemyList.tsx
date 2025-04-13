@@ -19,7 +19,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
           <li
             key={enemy.id}
             className={`p-2 border rounded cursor-pointer ${
-              selected?.id === enemy.id ? "bg-red-200" : "bg-white"
+              selected?.id === enemy.id ? "bg-red-200 border-red-500" : "bg-white"
             }`}
             onClick={() => onSelect(enemy)}
           >
