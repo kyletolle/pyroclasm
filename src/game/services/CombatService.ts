@@ -215,7 +215,6 @@ function isBossWave(wave: number): boolean {
  */
 export function generateWaveEnemies(wave: number): Enemy[] {
   // Base values for scaling
-  const baseHP = 100;
   const hpMultiplier = 1 + (wave - 1) * 0.5; // Increase HP by 50% per wave
 
   // Generate enemies based on wave characteristics
