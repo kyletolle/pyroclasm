@@ -4,6 +4,7 @@ export interface Enemy {
   name: string;
   hp: number;
   burnStacks: number;
+  isDead: boolean;
 }
 
 // Factory function to create a new enemy instance
@@ -13,5 +14,6 @@ export function createEnemy(id: number, name: string, hp: number): Enemy {
     name,
     hp,
     burnStacks: 0,
+    isDead: false,
   };
 }

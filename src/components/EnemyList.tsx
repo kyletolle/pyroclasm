@@ -18,25 +18,38 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
         {enemies.map(enemy => (
           <li
             key={enemy.id}
-            className={`p-2 border rounded cursor-pointer ${
-              selected?.id === enemy.id
+            className={`p-2 border rounded ${enemy.isDead ? 'cursor-default opacity-70' : 'cursor-pointer'} ${
+              selected?.id === enemy.id && !enemy.isDead
                 ? isDark
                   ? 'bg-red-900 border-red-500'
                   : 'bg-red-200 border-red-500'
-                : isDark
-                  ? 'bg-gray-800 border-gray-700'
-                  : 'bg-white border-gray-300'
+                : enemy.isDead
+                  ? isDark
+                    ? 'bg-gray-900 border-gray-700'
+                    : 'bg-gray-100 border-gray-400'
+                  : isDark
+                    ? 'bg-gray-800 border-gray-700'
+                    : 'bg-white border-gray-300'
             }`}
-            onClick={() => onSelect(enemy)}
+            onClick={() => !enemy.isDead && onSelect(enemy)}
           >
-            {enemy.name} (HP: {enemy.hp})
-            {enemy.burnStacks > 0 && (
-              <span
-                className={`ml-2 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}
-              >
-                🔥 {enemy.burnStacks}
-              </span>
-            )}
+            <div className="flex justify-between items-center">
+              <div>
+                {enemy.name}{' '}
+                {enemy.isDead ? (
+                  <span className="font-bold">💀 Defeated</span>
+                ) : (
+                  <span>(HP: {enemy.hp})</span>
+                )}
+              </div>
+              {enemy.burnStacks > 0 && !enemy.isDead && (
+                <span
+                  className={`ml-2 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}
+                >
+                  🔥 {enemy.burnStacks}
+                </span>
+              )}
+            </div>
           </li>
         ))}
       </ul>

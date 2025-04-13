@@ -32,8 +32,22 @@ function App() {
         const result = skipTurn(enemies);
         setEnemies(result.updatedEnemies);
 
+        // Add turn message if any effects were applied
         if (result.enemiesAffected > 0) {
           setLog(prev => [...prev, result.message]);
+        }
+
+        // Add death messages if any enemies died this turn
+        if (result.deathMessages.length > 0) {
+          setLog(prev => [...prev, ...result.deathMessages]);
+        }
+
+        // Clear selection if the selected enemy died
+        if (
+          selectedEnemy &&
+          result.updatedEnemies.find(e => e.id === selectedEnemy.id)?.isDead
+        ) {
+          setSelectedEnemy(null);
         }
       }, tickSpeed);
     }
@@ -44,7 +58,7 @@ function App() {
         clearInterval(intervalId);
       }
     };
-  }, [autoTickEnabled, tickSpeed, enemies]); // Re-run effect when these dependencies change
+  }, [autoTickEnabled, tickSpeed, enemies, selectedEnemy]); // Re-run effect when these dependencies change
 
   const handleAttack = (effect: DamageEffect) => {
     // Use our combat service to handle the attack
@@ -52,7 +66,22 @@ function App() {
 
     // Update state with the result
     setEnemies(result.updatedEnemies);
+
+    // Add attack message
     setLog(prev => [...prev, result.message]);
+
+    // Add death messages if any enemies died from this attack
+    if (result.deathMessages.length > 0) {
+      setLog(prev => [...prev, ...result.deathMessages]);
+
+      // Clear selection if the selected enemy died
+      if (
+        selectedEnemy &&
+        result.updatedEnemies.find(e => e.id === selectedEnemy.id)?.isDead
+      ) {
+        setSelectedEnemy(null);
+      }
+    }
 
     // Ensure auto-tick is enabled when an attack is made
     if (!autoTickEnabled) {

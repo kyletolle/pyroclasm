@@ -7,18 +7,23 @@ interface Props {
   onSpeedChange: (speed: number) => void;
 }
 
-export function AutoTicker({ isRunning, onToggle, tickSpeed, onSpeedChange }: Props) {
+export function AutoTicker({
+  isRunning,
+  onToggle,
+  tickSpeed,
+  onSpeedChange,
+}: Props) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  
+
   // Available tick speed options in milliseconds
   const speedOptions = [
     { value: 2000, label: '0.5x' },
     { value: 1000, label: '1x' },
     { value: 500, label: '2x' },
-    { value: 250, label: '4x' }
+    { value: 250, label: '4x' },
   ];
-  
+
   return (
     <div className="flex flex-col gap-2 border rounded p-3 bg-opacity-10 bg-gray-100 dark:bg-gray-800 dark:bg-opacity-20">
       <div className="flex items-center justify-between">
@@ -38,7 +43,7 @@ export function AutoTicker({ isRunning, onToggle, tickSpeed, onSpeedChange }: Pr
           {isRunning ? 'Pause' : 'Resume'}
         </button>
       </div>
-      
+
       <div className="flex items-center gap-2">
         <span className="text-sm">Speed:</span>
         <div className="flex gap-1">
@@ -61,11 +66,13 @@ export function AutoTicker({ isRunning, onToggle, tickSpeed, onSpeedChange }: Pr
           ))}
         </div>
       </div>
-      
+
       {isRunning ? (
         <div className="mt-1 flex items-center">
           <div className="animate-pulse mr-2 w-2 h-2 bg-orange-500 rounded-full"></div>
-          <span className="text-sm">Processing turns every {tickSpeed/1000} seconds</span>
+          <span className="text-sm">
+            Processing turns every {tickSpeed / 1000} seconds
+          </span>
         </div>
       ) : (
         <div className="mt-1 flex items-center text-sm text-amber-600 dark:text-amber-400">
