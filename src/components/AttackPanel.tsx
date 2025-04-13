@@ -1,6 +1,9 @@
+import { capitalize } from "../utils";
+
 export type DamageEffect = "fire" | "burn" | "scorch" | "inferno" | "pyroclasm";
 
 const effects: DamageEffect[] = ["fire", "burn", "scorch", "inferno", "pyroclasm"];
+
 
 export function AttackPanel({ onAttack }: { onAttack: (e: DamageEffect) => void }) {
   return (
@@ -13,7 +16,7 @@ export function AttackPanel({ onAttack }: { onAttack: (e: DamageEffect) => void 
             className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded"
             onClick={() => onAttack(effect)}
           >
-            {effect.toUpperCase()}
+            {capitalize(effect)}
           </button>
         ))}
       </div>

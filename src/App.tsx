@@ -2,6 +2,7 @@ import { useState } from "react";
 import { EnemyList, type Enemy}  from "./components/EnemyList";
 import { type DamageEffect, AttackPanel  } from "./components/AttackPanel";
 import ActionLog from "./components/ActionLog";
+import { capitalize } from "./utils";
 
 const baseDamageMap: Record<DamageEffect, number> = {
   fire: 30,
@@ -34,7 +35,7 @@ function App() {
     );
     setLog((prev) => [
       ...prev,
-      `Used ${effect.toUpperCase()} on ${selectedEnemy.name} for ${damage} damage.`,
+      `Used ${capitalize(effect)} on ${selectedEnemy.name} for ${damage} damage.`,
     ]);
   };
 
