@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { EnemyList, type Enemy } from './components/EnemyList';
 import { type DamageEffect, AttackPanel } from './components/AttackPanel';
 import ActionLog from './components/ActionLog';
@@ -35,6 +35,24 @@ function App() {
   ]);
   const [selectedEnemy, setSelectedEnemy] = useState<Enemy | null>(null);
   const [log, setLog] = useState<string[]>([]);
+  const [theme, setTheme] = useState(
+    document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  );
+
+  // Listen for theme changes
+  useEffect(() => {
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          setTheme(isDark ? 'dark' : 'light');
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
 
   const useAttack = (effect: DamageEffect) => {
     if (!selectedEnemy) {
@@ -102,29 +120,37 @@ function App() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 dark:bg-gray-900 dark:text-white min-h-screen">
-      <div className="flex justify-between items-center col-span-1 md:col-span-2">
-        <h1 className="text-2xl font-bold">Pyroclasm</h1>
-        <ThemeToggle />
-      </div>
-
-      <EnemyList
-        enemies={enemies}
-        selected={selectedEnemy}
-        onSelect={setSelectedEnemy}
-      />
-      <div>
-        <AttackPanel onAttack={useAttack} />
-        <div className="mt-4">
-          <button
-            onClick={skipTurn}
-            className="w-full bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800 text-white px-4 py-2 rounded"
-          >
-            Skip Turn
-          </button>
+    <div
+      className={`w-full min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
+    >
+      <div className="p-6 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex justify-between items-center col-span-1 md:col-span-2">
+          <h1 className="text-2xl font-bold">Pyroclasm</h1>
+          <ThemeToggle />
         </div>
+
+        <EnemyList
+          enemies={enemies}
+          selected={selectedEnemy}
+          onSelect={setSelectedEnemy}
+        />
+        <div>
+          <AttackPanel onAttack={useAttack} />
+          <div className="mt-4">
+            <button
+              onClick={skipTurn}
+              className={`w-full px-4 py-2 rounded ${
+                theme === 'dark'
+                  ? 'bg-gray-700 hover:bg-gray-800 text-white'
+                  : 'bg-gray-600 hover:bg-gray-700 text-white'
+              }`}
+            >
+              Skip Turn
+            </button>
+          </div>
+        </div>
+        <ActionLog log={log} />
       </div>
-      <ActionLog log={log} />
     </div>
   );
 }
