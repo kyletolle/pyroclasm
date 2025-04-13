@@ -18,7 +18,7 @@ function App() {
   const [enemies, setEnemies] = useState<Enemy[]>(createInitialEnemies());
   const [selectedEnemy, setSelectedEnemy] = useState<Enemy | null>(null);
   const [log, setLog] = useState<string[]>([]);
-  const [autoTickEnabled, setAutoTickEnabled] = useState<boolean>(false);
+  const [autoTickEnabled, setAutoTickEnabled] = useState<boolean>(true); // Auto-tick enabled by default
   const [tickSpeed, setTickSpeed] = useState<number>(1000); // milliseconds
   const { theme } = useTheme();
 
@@ -53,15 +53,11 @@ function App() {
     // Update state with the result
     setEnemies(result.updatedEnemies);
     setLog(prev => [...prev, result.message]);
-  };
 
-  const handleSkipTurn = () => {
-    // Use our combat service to process the turn skip
-    const result = skipTurn(enemies);
-
-    // Update state with the result
-    setEnemies(result.updatedEnemies);
-    setLog(prev => [...prev, result.message]);
+    // Ensure auto-tick is enabled when an attack is made
+    if (!autoTickEnabled) {
+      setAutoTickEnabled(true);
+    }
   };
 
   const toggleAutoTick = () => {
@@ -91,32 +87,13 @@ function App() {
         <div className="flex flex-col gap-4">
           <AttackPanel onAttack={handleAttack} />
 
-          <div>
+          <div className="mt-2">
             <AutoTicker
               isRunning={autoTickEnabled}
               onToggle={toggleAutoTick}
               tickSpeed={tickSpeed}
               onSpeedChange={handleTickSpeedChange}
             />
-          </div>
-
-          <div className="mt-2">
-            <button
-              onClick={handleSkipTurn}
-              className={`w-full px-4 py-2 rounded ${
-                theme === 'dark'
-                  ? 'bg-gray-700 hover:bg-gray-800 text-white'
-                  : 'bg-gray-600 hover:bg-gray-700 text-white'
-              }`}
-              disabled={autoTickEnabled}
-            >
-              Skip Turn
-            </button>
-            {autoTickEnabled && (
-              <div className="text-xs text-center mt-1 text-gray-500">
-                Manual skip disabled during auto-tick
-              </div>
-            )}
           </div>
         </div>
 
