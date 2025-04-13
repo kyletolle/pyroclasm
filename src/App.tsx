@@ -1,108 +1,40 @@
 import { useState } from 'react';
-import { EnemyList, type Enemy } from './components/EnemyList';
-import { type DamageEffect, AttackPanel } from './components/AttackPanel';
+import { EnemyList } from './components/EnemyList';
+import { AttackPanel } from './components/AttackPanel';
 import ActionLog from './components/ActionLog';
 import { ThemeToggle } from './components/ThemeToggle';
-import { capitalize } from './utils';
 import { useTheme } from './context/ThemeContext';
-
-const baseDamageMap: Record<DamageEffect, number> = {
-  fire: 30,
-  burn: 5,
-  scorch: 10,
-  inferno: 20,
-  pyroclasm: 50,
-};
-
-// Defines how status effects work
-const statusEffects = {
-  burn: {
-    damagePerStack: 3,
-    stacksApplied: {
-      fire: 2,
-      burn: 1,
-      scorch: 1,
-      inferno: 3,
-      pyroclasm: 5,
-    },
-  },
-};
+import {
+  type Enemy,
+  type DamageEffect,
+  applyAttack,
+  skipTurn,
+  createInitialEnemies,
+} from './game';
 
 function App() {
-  const [enemies, setEnemies] = useState<Enemy[]>([
-    { id: 1, name: 'Goblin', hp: 100, burnStacks: 0 },
-    { id: 2, name: 'Orc', hp: 150, burnStacks: 0 },
-    { id: 3, name: 'Dragon Whelp', hp: 200, burnStacks: 0 },
-  ]);
+  // Initialize game state with enemies from our service
+  const [enemies, setEnemies] = useState<Enemy[]>(createInitialEnemies());
   const [selectedEnemy, setSelectedEnemy] = useState<Enemy | null>(null);
   const [log, setLog] = useState<string[]>([]);
-
-  // Get theme from context instead of managing it here
   const { theme } = useTheme();
 
-  const useAttack = (effect: DamageEffect) => {
-    if (!selectedEnemy) {
-      setLog(prev => [...prev, 'No enemy selected!']);
-      return;
-    }
+  const handleAttack = (effect: DamageEffect) => {
+    // Use our combat service to handle the attack
+    const result = applyAttack(enemies, selectedEnemy, effect);
 
-    const damage = baseDamageMap[effect];
-    const burnStacksToAdd = statusEffects.burn.stacksApplied[effect] || 0;
-
-    setEnemies(prev =>
-      prev.map(e =>
-        e.id === selectedEnemy.id
-          ? {
-              ...e,
-              hp: Math.max(0, e.hp - damage),
-              burnStacks: e.burnStacks + burnStacksToAdd,
-            }
-          : e
-      )
-    );
-
-    let message = `Used ${capitalize(effect)} on ${selectedEnemy.name} for ${damage} damage.`;
-    if (burnStacksToAdd > 0) {
-      message += ` Added ${burnStacksToAdd} burn stack${burnStacksToAdd > 1 ? 's' : ''}.`;
-    }
-
-    setLog(prev => [...prev, message]);
+    // Update state with the result
+    setEnemies(result.updatedEnemies);
+    setLog(prev => [...prev, result.message]);
   };
 
-  const skipTurn = () => {
-    // Apply damage over time effects
-    let totalDamageDealt = 0;
-    let enemiesWithEffects = 0;
+  const handleSkipTurn = () => {
+    // Use our combat service to process the turn skip
+    const result = skipTurn(enemies);
 
-    // Calculate effects and create updated enemies array
-    const updatedEnemies = enemies.map(enemy => {
-      if (enemy.burnStacks > 0) {
-        const burnDamage = enemy.burnStacks * statusEffects.burn.damagePerStack;
-        enemiesWithEffects++;
-        totalDamageDealt += burnDamage;
-
-        // Burn stacks decrease by 1 each turn
-        return {
-          ...enemy,
-          hp: Math.max(0, enemy.hp - burnDamage),
-          burnStacks: enemy.burnStacks - 1,
-        };
-      }
-      return enemy;
-    });
-
-    // Update the enemies state
-    setEnemies(updatedEnemies);
-
-    // Log the results
-    if (enemiesWithEffects > 0) {
-      setLog(prev => [
-        ...prev,
-        `Skipped turn. Burn effects dealt ${totalDamageDealt} total damage to ${enemiesWithEffects} enemies.`,
-      ]);
-    } else {
-      setLog(prev => [...prev, 'Skipped turn. No status effects to resolve.']);
-    }
+    // Update state with the result
+    setEnemies(result.updatedEnemies);
+    setLog(prev => [...prev, result.message]);
   };
 
   return (
@@ -121,10 +53,10 @@ function App() {
           onSelect={setSelectedEnemy}
         />
         <div>
-          <AttackPanel onAttack={useAttack} />
+          <AttackPanel onAttack={handleAttack} />
           <div className="mt-4">
             <button
-              onClick={skipTurn}
+              onClick={handleSkipTurn}
               className={`w-full px-4 py-2 rounded ${
                 theme === 'dark'
                   ? 'bg-gray-700 hover:bg-gray-800 text-white'

@@ -1,11 +1,5 @@
 import { useTheme } from '../context/ThemeContext';
-
-export interface Enemy {
-  id: number;
-  name: string;
-  hp: number;
-  burnStacks: number;
-}
+import { Enemy } from '../game/models/Enemy';
 
 interface Props {
   enemies: Enemy[];
