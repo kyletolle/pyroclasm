@@ -246,350 +246,19 @@ function calculateBurnDamage(enemy: Enemy): number {
 }
 
 /**
- * Applies an attack of a specific damage effect to a target enemy
+ * Handles a basic single-target attack (fire, fireBolt, emberSpark)
  */
-export function applyAttack(
+function handleBasicAttack(
   enemies: Enemy[],
-  targetEnemy: Enemy | null,
-  effect: DamageEffect
+  targetEnemy: Enemy,
+  effect: DamageEffect,
+  damage: number,
+  burnStacksToAdd: number
 ): AttackResult {
-  if (!targetEnemy) {
-    return {
-      updatedEnemies: enemies,
-      message: 'No enemy selected!',
-      deathMessages: [],
-      effectMessages: [],
-    };
-  }
-
-  // Don't allow attacks on dead enemies
-  if (targetEnemy.isDead) {
-    return {
-      updatedEnemies: enemies,
-      message: `${targetEnemy.name} is already defeated!`,
-      deathMessages: [],
-      effectMessages: [],
-    };
-  }
-
-  // Calculate direct damage
-  const damage = BASE_DAMAGE[effect];
-  const burnStacksToAdd = STATUS_EFFECTS.burn.stacksApplied[effect] || 0;
   const deathMessages: string[] = [];
   const effectMessages: string[] = [];
 
-  // Handle special cases for attacks with unique effects
-  if (effect === 'flameWave') {
-    // ...existing flameWave code...
-    let updatedEnemies = [...enemies];
-    const livingEnemies = enemies.filter(e => !e.isDead);
-    const affectedEnemyNames: string[] = [];
-
-    // Apply damage and burn to all living enemies
-    livingEnemies.forEach(enemy => {
-      const enemyIndex = updatedEnemies.findIndex(e => e.id === enemy.id);
-      if (enemyIndex !== -1) {
-        // Apply damage
-        const damagedEnemy = {
-          ...enemy,
-          hp: Math.max(0, enemy.hp - damage),
-          burnStacks: enemy.burnStacks + burnStacksToAdd,
-        };
-
-        // Check if enemy died from this attack
-        const { enemy: afterDeathCheck, hasDied } = checkForDeath(damagedEnemy);
-
-        if (hasDied) {
-          deathMessages.push(`${enemy.name} has been defeated! 💀`);
-        }
-
-        updatedEnemies[enemyIndex] = afterDeathCheck;
-        affectedEnemyNames.push(enemy.name);
-      }
-    });
-
-    // Process derivative effects for all living enemies
-    for (const enemy of updatedEnemies.filter(e => !e.isDead)) {
-      // Process scorch (2nd derivative)
-      const afterScorch = processScorchProc(enemy, effectMessages);
-
-      // Update enemy in array
-      updatedEnemies = updatedEnemies.map(e =>
-        e.id === enemy.id ? afterScorch : e
-      );
-
-      // Process inferno (3rd derivative)
-      const {
-        updatedTarget: afterInferno,
-        updatedEnemies: afterInfernoEnemies,
-      } = processInfernoProc(afterScorch, updatedEnemies, effectMessages);
-
-      updatedEnemies = afterInfernoEnemies;
-
-      // Process pyroclasm (special case)
-      updatedEnemies = processPyroclasmProc(
-        afterInferno,
-        updatedEnemies,
-        effectMessages
-      );
-    }
-
-    // Construct result message
-    const message = `Used Flame Wave, hitting ${livingEnemies.length} enemies for ${damage} damage each and applying ${burnStacksToAdd} burn stacks.`;
-
-    return {
-      updatedEnemies,
-      message,
-      deathMessages,
-      effectMessages,
-    };
-  } else if (effect === 'heatIntensify') {
-    // Special case for Heat Intensify - double burn stacks on target
-    let updatedEnemies = [...enemies];
-    const targetIndex = updatedEnemies.findIndex(e => e.id === targetEnemy.id);
-
-    // Make sure we're working with the most current version of the target enemy
-    const currentTargetEnemy = updatedEnemies[targetIndex];
-
-    // Log the enemy's current burn stacks for debugging
-    console.log(
-      `Heat Intensify on ${currentTargetEnemy.name} with burn stacks: ${currentTargetEnemy.burnStacks}`
-    );
-
-    if (currentTargetEnemy.burnStacks <= 0) {
-      // Try using a basic fire attack instead to apply burn stacks
-      const fireAttack: DamageEffect = 'fire';
-      const damage = BASE_DAMAGE[fireAttack];
-      const burnStacksToAdd =
-        STATUS_EFFECTS.burn.stacksApplied[fireAttack] || 0;
-
-      // Apply damage and burn stacks
-      const updatedEnemy = {
-        ...currentTargetEnemy,
-        hp: Math.max(0, currentTargetEnemy.hp - damage),
-        burnStacks: currentTargetEnemy.burnStacks + burnStacksToAdd,
-      };
-
-      updatedEnemies[targetIndex] = updatedEnemy;
-
-      // Process derivative effects
-      const afterScorch = processScorchProc(updatedEnemy, effectMessages);
-      updatedEnemies[targetIndex] = afterScorch;
-
-      const {
-        updatedTarget: afterInferno,
-        updatedEnemies: afterInfernoEnemies,
-      } = processInfernoProc(afterScorch, updatedEnemies, effectMessages);
-
-      updatedEnemies = afterInfernoEnemies.map(e =>
-        e.id === afterInferno.id ? afterInferno : e
-      );
-
-      updatedEnemies = processPyroclasmProc(
-        afterInferno,
-        updatedEnemies,
-        effectMessages
-      );
-
-      return {
-        updatedEnemies,
-        message: `Heat Intensify converted to Fire attack on ${targetEnemy.name} for ${damage} damage and ${burnStacksToAdd} burn stacks!`,
-        deathMessages,
-        effectMessages,
-      };
-    }
-
-    const oldBurnStacks = currentTargetEnemy.burnStacks;
-    const newBurnStacks = oldBurnStacks * 2;
-
-    // Create a copy to avoid reference issues
-    const updatedEnemy = {
-      ...currentTargetEnemy,
-      burnStacks: newBurnStacks,
-    };
-
-    // Update the enemy in the array
-    updatedEnemies[targetIndex] = updatedEnemy;
-
-    effectMessages.push(
-      `🔆 Burn intensifies on ${targetEnemy.name}! Burn stacks doubled from ${oldBurnStacks} to ${newBurnStacks}.`
-    );
-
-    // Process derivative effects (but ensure burn stacks remain at least doubled)
-    const afterScorch = processScorchProc(
-      updatedEnemies[targetIndex],
-      effectMessages
-    );
-
-    // Make sure burn stacks don't go below the doubled value due to processing
-    if (afterScorch.burnStacks < newBurnStacks) {
-      afterScorch.burnStacks = newBurnStacks;
-    }
-
-    updatedEnemies[targetIndex] = afterScorch;
-
-    const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
-      processInfernoProc(afterScorch, updatedEnemies, effectMessages);
-
-    // Make sure burn stacks don't go below the doubled value
-    if (afterInferno.burnStacks < newBurnStacks) {
-      afterInferno.burnStacks = newBurnStacks;
-    }
-
-    updatedEnemies = afterInfernoEnemies.map(e =>
-      e.id === afterInferno.id ? afterInferno : e
-    );
-
-    updatedEnemies = processPyroclasmProc(
-      afterInferno,
-      updatedEnemies,
-      effectMessages
-    );
-
-    return {
-      updatedEnemies,
-      message: `Used Heat Intensify on ${targetEnemy.name}, doubling burn stacks from ${oldBurnStacks} to ${newBurnStacks}!`,
-      deathMessages,
-      effectMessages,
-    };
-  } else if (effect === 'combustion') {
-    // Special case for Combustion - converts half of burn stacks to immediate damage
-    let updatedEnemies = [...enemies];
-    const targetIndex = updatedEnemies.findIndex(e => e.id === targetEnemy.id);
-
-    // Make sure we're working with the most current version of the target enemy
-    const currentTargetEnemy = updatedEnemies[targetIndex];
-
-    // Log the enemy's current burn stacks for debugging
-    console.log(
-      `Combustion on ${currentTargetEnemy.name} with burn stacks: ${currentTargetEnemy.burnStacks}`
-    );
-
-    if (currentTargetEnemy.burnStacks === 0) {
-      // Try using a basic fire attack instead to apply burn stacks
-      const fireAttack: DamageEffect = 'fire';
-      const damage = BASE_DAMAGE[fireAttack];
-      const burnStacksToAdd =
-        STATUS_EFFECTS.burn.stacksApplied[fireAttack] || 0;
-
-      // Apply damage and burn stacks
-      const updatedEnemy = {
-        ...currentTargetEnemy,
-        hp: Math.max(0, currentTargetEnemy.hp - damage),
-        burnStacks: currentTargetEnemy.burnStacks + burnStacksToAdd,
-      };
-
-      updatedEnemies[targetIndex] = updatedEnemy;
-
-      // Process derivative effects
-      const afterScorch = processScorchProc(updatedEnemy, effectMessages);
-      updatedEnemies[targetIndex] = afterScorch;
-
-      const {
-        updatedTarget: afterInferno,
-        updatedEnemies: afterInfernoEnemies,
-      } = processInfernoProc(afterScorch, updatedEnemies, effectMessages);
-
-      updatedEnemies = afterInfernoEnemies.map(e =>
-        e.id === afterInferno.id ? afterInferno : e
-      );
-
-      updatedEnemies = processPyroclasmProc(
-        afterInferno,
-        updatedEnemies,
-        effectMessages
-      );
-
-      return {
-        updatedEnemies,
-        message: `Combustion converted to Fire attack on ${currentTargetEnemy.name} for ${damage} damage and ${burnStacksToAdd} burn stacks!`,
-        deathMessages,
-        effectMessages,
-      };
-    }
-
-    const burnStacksToConvert = Math.floor(currentTargetEnemy.burnStacks / 2);
-    const remainingBurnStacks =
-      currentTargetEnemy.burnStacks - burnStacksToConvert;
-
-    // Calculate combustion damage with modifiers from status effects
-    let combustionDamage =
-      burnStacksToConvert * STATUS_EFFECTS.burn.baseDamagePerStack;
-
-    // Apply scorch multiplier if applicable
-    if (currentTargetEnemy.scorchLevel > 0) {
-      const scorchMultiplier = Math.pow(
-        STATUS_EFFECTS.scorch.burnDamageMultiplier,
-        currentTargetEnemy.scorchLevel
-      );
-      combustionDamage *= scorchMultiplier;
-    }
-
-    // Apply inferno multiplier if applicable
-    if (currentTargetEnemy.infernoLevel > 0) {
-      const infernoMultiplier = Math.pow(
-        STATUS_EFFECTS.inferno.scorchMultiplier,
-        currentTargetEnemy.infernoLevel
-      );
-      combustionDamage *= infernoMultiplier;
-    }
-
-    // Round the final damage value
-    combustionDamage = Math.round(combustionDamage);
-
-    // Create a new enemy object with updated HP and burn stacks
-    const updatedEnemy = {
-      ...currentTargetEnemy,
-      burnStacks: remainingBurnStacks,
-      hp: Math.max(0, currentTargetEnemy.hp - combustionDamage),
-    };
-
-    // Update the enemy in the array
-    updatedEnemies[targetIndex] = updatedEnemy;
-
-    effectMessages.push(
-      `💥 Burn stacks combust on ${currentTargetEnemy.name}! ${burnStacksToConvert} stacks converted to ${combustionDamage} immediate damage!`
-    );
-
-    // Check if enemy died from combustion damage
-    const { enemy: afterDeathCheck, hasDied } = checkForDeath(updatedEnemy);
-
-    if (hasDied) {
-      deathMessages.push(
-        `${currentTargetEnemy.name} has been burned to death by Combustion! 💀🔥`
-      );
-    }
-
-    updatedEnemies[targetIndex] = afterDeathCheck;
-
-    // Only process derivative effects if enemy is still alive
-    if (!afterDeathCheck.isDead) {
-      const afterScorch = processScorchProc(afterDeathCheck, effectMessages);
-      updatedEnemies[targetIndex] = afterScorch;
-
-      const {
-        updatedTarget: afterInferno,
-        updatedEnemies: afterInfernoEnemies,
-      } = processInfernoProc(afterScorch, updatedEnemies, effectMessages);
-
-      updatedEnemies = afterInfernoEnemies;
-
-      updatedEnemies = processPyroclasmProc(
-        afterInferno,
-        updatedEnemies,
-        effectMessages
-      );
-    }
-
-    return {
-      updatedEnemies,
-      message: `Used Combustion on ${currentTargetEnemy.name}, converting ${burnStacksToConvert} burn stacks to ${combustionDamage} immediate damage!`,
-      deathMessages,
-      effectMessages,
-    };
-  }
-
-  // For single target attacks (fire, fireBolt, emberSpark)
+  // Apply damage to target enemy
   let updatedEnemies = enemies.map(enemy => {
     if (enemy.id === targetEnemy.id) {
       // Apply damage
@@ -654,59 +323,443 @@ export function applyAttack(
 }
 
 /**
- * Processes a turn skip, applying status effects like burn damage
+ * Handles the flameWave attack which hits all enemies
  */
-export function skipTurn(enemies: Enemy[]): SkipTurnResult {
-  let totalDamageDealt = 0;
-  let enemiesWithEffects = 0;
+function handleFlameWaveAttack(
+  enemies: Enemy[],
+  damage: number,
+  burnStacksToAdd: number
+): AttackResult {
   const deathMessages: string[] = [];
   const effectMessages: string[] = [];
 
-  // Process status effects for each enemy
   let updatedEnemies = [...enemies];
+  const livingEnemies = enemies.filter(e => !e.isDead);
+  const affectedEnemyNames: string[] = [];
 
-  // First apply burn damage to all enemies
-  updatedEnemies = updatedEnemies.map(enemy => {
-    // Skip processing for dead enemies
-    if (enemy.isDead) return enemy;
-
-    if (enemy.burnStacks > 0) {
-      // Calculate burn damage with all modifiers
-      const burnDamage = calculateBurnDamage(enemy);
-      enemiesWithEffects++;
-      totalDamageDealt += burnDamage;
-
-      // Apply burn damage and reduce burn stacks
-      const updatedBurnStacks = Math.max(0, enemy.burnStacks - 1);
-
-      // If burn stacks reach 0, reset scorch and inferno levels
-      const updatedScorchLevel =
-        updatedBurnStacks === 0 ? 0 : enemy.scorchLevel;
-      const updatedInfernoLevel =
-        updatedBurnStacks === 0 ? 0 : enemy.infernoLevel;
-
+  // Apply damage and burn to all living enemies
+  livingEnemies.forEach(enemy => {
+    const enemyIndex = updatedEnemies.findIndex(e => e.id === enemy.id);
+    if (enemyIndex !== -1) {
+      // Apply damage
       const damagedEnemy = {
         ...enemy,
-        hp: Math.max(0, enemy.hp - burnDamage),
-        burnStacks: updatedBurnStacks,
-        scorchLevel: updatedScorchLevel,
-        infernoLevel: updatedInfernoLevel,
-        hasPyroclasm: enemy.hasPyroclasm ? updatedBurnStacks > 0 : false, // Pyroclasm fades when burn stacks are gone
+        hp: Math.max(0, enemy.hp - damage),
+        burnStacks: enemy.burnStacks + burnStacksToAdd,
       };
 
-      // Check if enemy died from this burn damage
-      const { enemy: finalEnemy, hasDied } = checkForDeath(damagedEnemy);
+      // Check if enemy died from this attack
+      const { enemy: afterDeathCheck, hasDied } = checkForDeath(damagedEnemy);
 
       if (hasDied) {
-        deathMessages.push(`${enemy.name} has been burned to death! 💀🔥`);
+        deathMessages.push(`${enemy.name} has been defeated! 💀`);
       }
 
-      return finalEnemy;
+      updatedEnemies[enemyIndex] = afterDeathCheck;
+      affectedEnemyNames.push(enemy.name);
     }
-    return enemy;
   });
 
-  // Then process all derivative effects for living enemies with burn stacks
+  // Process derivative effects for all living enemies
+  for (const enemy of updatedEnemies.filter(e => !e.isDead)) {
+    // Process scorch (2nd derivative)
+    const afterScorch = processScorchProc(enemy, effectMessages);
+
+    // Update enemy in array
+    updatedEnemies = updatedEnemies.map(e =>
+      e.id === enemy.id ? afterScorch : e
+    );
+
+    // Process inferno (3rd derivative)
+    const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
+      processInfernoProc(afterScorch, updatedEnemies, effectMessages);
+
+    updatedEnemies = afterInfernoEnemies;
+
+    // Process pyroclasm (special case)
+    updatedEnemies = processPyroclasmProc(
+      afterInferno,
+      updatedEnemies,
+      effectMessages
+    );
+  }
+
+  // Construct result message
+  const message = `Used Flame Wave, hitting ${livingEnemies.length} enemies for ${damage} damage each and applying ${burnStacksToAdd} burn stacks.`;
+
+  return {
+    updatedEnemies,
+    message,
+    deathMessages,
+    effectMessages,
+  };
+}
+
+/**
+ * Handles the Heat Intensify attack which doubles burn stacks
+ */
+function handleHeatIntensifyAttack(
+  enemies: Enemy[],
+  targetEnemy: Enemy
+): AttackResult {
+  const deathMessages: string[] = [];
+  const effectMessages: string[] = [];
+
+  let updatedEnemies = [...enemies];
+  const targetIndex = updatedEnemies.findIndex(e => e.id === targetEnemy.id);
+
+  // Make sure we're working with the most current version of the target enemy
+  const currentTargetEnemy = updatedEnemies[targetIndex];
+
+  // Log the enemy's current burn stacks for debugging
+  console.log(
+    `Heat Intensify on ${currentTargetEnemy.name} with burn stacks: ${currentTargetEnemy.burnStacks}`
+  );
+
+  if (currentTargetEnemy.burnStacks <= 0) {
+    // Try using a basic fire attack instead to apply burn stacks
+    const fireAttack: DamageEffect = 'fire';
+    const damage = BASE_DAMAGE[fireAttack];
+    const burnStacksToAdd = STATUS_EFFECTS.burn.stacksApplied[fireAttack] || 0;
+
+    return handleFireAttackFallback(
+      updatedEnemies,
+      currentTargetEnemy,
+      damage,
+      burnStacksToAdd,
+      'Heat Intensify'
+    );
+  }
+
+  const oldBurnStacks = currentTargetEnemy.burnStacks;
+  const newBurnStacks = oldBurnStacks * 2;
+
+  // Create a copy to avoid reference issues
+  const updatedEnemy = {
+    ...currentTargetEnemy,
+    burnStacks: newBurnStacks,
+  };
+
+  // Update the enemy in the array
+  updatedEnemies[targetIndex] = updatedEnemy;
+
+  effectMessages.push(
+    `🔆 Burn intensifies on ${targetEnemy.name}! Burn stacks doubled from ${oldBurnStacks} to ${newBurnStacks}.`
+  );
+
+  // Process derivative effects (but ensure burn stacks remain at least doubled)
+  const afterScorch = processScorchProc(
+    updatedEnemies[targetIndex],
+    effectMessages
+  );
+
+  // Make sure burn stacks don't go below the doubled value due to processing
+  if (afterScorch.burnStacks < newBurnStacks) {
+    afterScorch.burnStacks = newBurnStacks;
+  }
+
+  updatedEnemies[targetIndex] = afterScorch;
+
+  const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
+    processInfernoProc(afterScorch, updatedEnemies, effectMessages);
+
+  // Make sure burn stacks don't go below the doubled value
+  if (afterInferno.burnStacks < newBurnStacks) {
+    afterInferno.burnStacks = newBurnStacks;
+  }
+
+  updatedEnemies = afterInfernoEnemies.map(e =>
+    e.id === afterInferno.id ? afterInferno : e
+  );
+
+  updatedEnemies = processPyroclasmProc(
+    afterInferno,
+    updatedEnemies,
+    effectMessages
+  );
+
+  return {
+    updatedEnemies,
+    message: `Used Heat Intensify on ${targetEnemy.name}, doubling burn stacks from ${oldBurnStacks} to ${newBurnStacks}!`,
+    deathMessages,
+    effectMessages,
+  };
+}
+
+/**
+ * A helper function for when skills fall back to fire attack
+ */
+function handleFireAttackFallback(
+  enemies: Enemy[],
+  targetEnemy: Enemy,
+  damage: number,
+  burnStacksToAdd: number,
+  originalAttackName: string
+): AttackResult {
+  const effectMessages: string[] = [];
+  let updatedEnemies = [...enemies];
+  const targetIndex = updatedEnemies.findIndex(e => e.id === targetEnemy.id);
+
+  // Apply damage and burn stacks
+  const updatedEnemy = {
+    ...targetEnemy,
+    hp: Math.max(0, targetEnemy.hp - damage),
+    burnStacks: targetEnemy.burnStacks + burnStacksToAdd,
+  };
+
+  updatedEnemies[targetIndex] = updatedEnemy;
+
+  // Process derivative effects
+  const afterScorch = processScorchProc(updatedEnemy, effectMessages);
+  updatedEnemies[targetIndex] = afterScorch;
+
+  const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
+    processInfernoProc(afterScorch, updatedEnemies, effectMessages);
+
+  updatedEnemies = afterInfernoEnemies.map(e =>
+    e.id === afterInferno.id ? afterInferno : e
+  );
+
+  updatedEnemies = processPyroclasmProc(
+    afterInferno,
+    updatedEnemies,
+    effectMessages
+  );
+
+  return {
+    updatedEnemies,
+    message: `${originalAttackName} converted to Fire attack on ${targetEnemy.name} for ${damage} damage and ${burnStacksToAdd} burn stacks!`,
+    deathMessages: [],
+    effectMessages,
+  };
+}
+
+/**
+ * Handles the Combustion attack which converts burn stacks to damage
+ */
+function handleCombustionAttack(
+  enemies: Enemy[],
+  targetEnemy: Enemy
+): AttackResult {
+  const deathMessages: string[] = [];
+  const effectMessages: string[] = [];
+
+  let updatedEnemies = [...enemies];
+  const targetIndex = updatedEnemies.findIndex(e => e.id === targetEnemy.id);
+
+  // Make sure we're working with the most current version of the target enemy
+  const currentTargetEnemy = updatedEnemies[targetIndex];
+
+  // Log the enemy's current burn stacks for debugging
+  console.log(
+    `Combustion on ${currentTargetEnemy.name} with burn stacks: ${currentTargetEnemy.burnStacks}`
+  );
+
+  if (currentTargetEnemy.burnStacks === 0) {
+    // Try using a basic fire attack instead to apply burn stacks
+    const fireAttack: DamageEffect = 'fire';
+    const damage = BASE_DAMAGE[fireAttack];
+    const burnStacksToAdd = STATUS_EFFECTS.burn.stacksApplied[fireAttack] || 0;
+
+    return handleFireAttackFallback(
+      updatedEnemies,
+      currentTargetEnemy,
+      damage,
+      burnStacksToAdd,
+      'Combustion'
+    );
+  }
+
+  const burnStacksToConvert = Math.floor(currentTargetEnemy.burnStacks / 2);
+  const remainingBurnStacks =
+    currentTargetEnemy.burnStacks - burnStacksToConvert;
+
+  // Calculate combustion damage with modifiers from status effects
+  const combustionDamage = calculateCombustionDamage(
+    burnStacksToConvert,
+    currentTargetEnemy.scorchLevel,
+    currentTargetEnemy.infernoLevel
+  );
+
+  // Create a new enemy object with updated HP and burn stacks
+  const updatedEnemy = {
+    ...currentTargetEnemy,
+    burnStacks: remainingBurnStacks,
+    hp: Math.max(0, currentTargetEnemy.hp - combustionDamage),
+  };
+
+  // Update the enemy in the array
+  updatedEnemies[targetIndex] = updatedEnemy;
+
+  effectMessages.push(
+    `💥 Burn stacks combust on ${currentTargetEnemy.name}! ${burnStacksToConvert} stacks converted to ${combustionDamage} immediate damage!`
+  );
+
+  // Check if enemy died from combustion damage
+  const { enemy: afterDeathCheck, hasDied } = checkForDeath(updatedEnemy);
+
+  if (hasDied) {
+    deathMessages.push(
+      `${currentTargetEnemy.name} has been burned to death by Combustion! 💀🔥`
+    );
+  }
+
+  updatedEnemies[targetIndex] = afterDeathCheck;
+
+  // Only process derivative effects if enemy is still alive
+  if (!afterDeathCheck.isDead) {
+    const afterScorch = processScorchProc(afterDeathCheck, effectMessages);
+    updatedEnemies[targetIndex] = afterScorch;
+
+    const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
+      processInfernoProc(afterScorch, updatedEnemies, effectMessages);
+
+    updatedEnemies = afterInfernoEnemies;
+
+    updatedEnemies = processPyroclasmProc(
+      afterInferno,
+      updatedEnemies,
+      effectMessages
+    );
+  }
+
+  return {
+    updatedEnemies,
+    message: `Used Combustion on ${currentTargetEnemy.name}, converting ${burnStacksToConvert} burn stacks to ${combustionDamage} immediate damage!`,
+    deathMessages,
+    effectMessages,
+  };
+}
+
+/**
+ * Calculate combustion damage based on burn stacks and status effects
+ */
+function calculateCombustionDamage(
+  burnStacks: number,
+  scorchLevel: number,
+  infernoLevel: number
+): number {
+  let combustionDamage = burnStacks * STATUS_EFFECTS.burn.baseDamagePerStack;
+
+  // Apply scorch multiplier if applicable
+  if (scorchLevel > 0) {
+    const scorchMultiplier = Math.pow(
+      STATUS_EFFECTS.scorch.burnDamageMultiplier,
+      scorchLevel
+    );
+    combustionDamage *= scorchMultiplier;
+  }
+
+  // Apply inferno multiplier if applicable
+  if (infernoLevel > 0) {
+    const infernoMultiplier = Math.pow(
+      STATUS_EFFECTS.inferno.scorchMultiplier,
+      infernoLevel
+    );
+    combustionDamage *= infernoMultiplier;
+  }
+
+  // Round the final damage value
+  return Math.round(combustionDamage);
+}
+
+/**
+ * Applies an attack of a specific damage effect to a target enemy
+ */
+export function applyAttack(
+  enemies: Enemy[],
+  targetEnemy: Enemy | null,
+  effect: DamageEffect
+): AttackResult {
+  if (!targetEnemy) {
+    return {
+      updatedEnemies: enemies,
+      message: 'No enemy selected!',
+      deathMessages: [],
+      effectMessages: [],
+    };
+  }
+
+  // Don't allow attacks on dead enemies
+  if (targetEnemy.isDead) {
+    return {
+      updatedEnemies: enemies,
+      message: `${targetEnemy.name} is already defeated!`,
+      deathMessages: [],
+      effectMessages: [],
+    };
+  }
+
+  // Calculate direct damage
+  const damage = BASE_DAMAGE[effect];
+  const burnStacksToAdd = STATUS_EFFECTS.burn.stacksApplied[effect] || 0;
+
+  // Handle special cases for attacks with unique effects
+  if (effect === 'flameWave') {
+    return handleFlameWaveAttack(enemies, damage, burnStacksToAdd);
+  } else if (effect === 'heatIntensify') {
+    return handleHeatIntensifyAttack(enemies, targetEnemy);
+  } else if (effect === 'combustion') {
+    return handleCombustionAttack(enemies, targetEnemy);
+  }
+
+  // For single target attacks (fire, fireBolt, emberSpark)
+  return handleBasicAttack(
+    enemies,
+    targetEnemy,
+    effect,
+    damage,
+    burnStacksToAdd
+  );
+}
+
+/**
+ * Applies burn damage to an enemy and processes any death
+ */
+function applyBurnDamage(enemy: Enemy): {
+  updatedEnemy: Enemy;
+  damage: number;
+  hasDied: boolean;
+} {
+  if (enemy.isDead || enemy.burnStacks <= 0) {
+    return { updatedEnemy: enemy, damage: 0, hasDied: false };
+  }
+
+  // Calculate burn damage with all modifiers
+  const burnDamage = calculateBurnDamage(enemy);
+
+  // Apply burn damage and reduce burn stacks
+  const updatedBurnStacks = Math.max(0, enemy.burnStacks - 1);
+
+  // If burn stacks reach 0, reset scorch and inferno levels
+  const updatedScorchLevel = updatedBurnStacks === 0 ? 0 : enemy.scorchLevel;
+  const updatedInfernoLevel = updatedBurnStacks === 0 ? 0 : enemy.infernoLevel;
+
+  const damagedEnemy = {
+    ...enemy,
+    hp: Math.max(0, enemy.hp - burnDamage),
+    burnStacks: updatedBurnStacks,
+    scorchLevel: updatedScorchLevel,
+    infernoLevel: updatedInfernoLevel,
+    hasPyroclasm: enemy.hasPyroclasm ? updatedBurnStacks > 0 : false, // Pyroclasm fades when burn stacks are gone
+  };
+
+  // Check if enemy died from this burn damage
+  const { enemy: finalEnemy, hasDied } = checkForDeath(damagedEnemy);
+
+  return { updatedEnemy: finalEnemy, damage: burnDamage, hasDied };
+}
+
+/**
+ * Processes status effects for all living enemies with burn stacks
+ */
+function processStatusEffects(
+  enemies: Enemy[],
+  effectMessages: string[]
+): Enemy[] {
+  let updatedEnemies = [...enemies];
+
+  // Process each living enemy with burn stacks
   for (const enemy of updatedEnemies.filter(
     e => !e.isDead && e.burnStacks > 0
   )) {
@@ -731,6 +784,46 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
       effectMessages
     );
   }
+
+  return updatedEnemies;
+}
+
+/**
+ * Processes a turn skip, applying status effects like burn damage
+ */
+export function skipTurn(enemies: Enemy[]): SkipTurnResult {
+  let totalDamageDealt = 0;
+  let enemiesWithEffects = 0;
+  const deathMessages: string[] = [];
+  const effectMessages: string[] = [];
+
+  // First apply burn damage to all enemies
+  let updatedEnemies = enemies.map(enemy => {
+    // Skip processing for dead enemies
+    if (enemy.isDead) return enemy;
+
+    if (enemy.burnStacks > 0) {
+      const { updatedEnemy, damage, hasDied } = applyBurnDamage(enemy);
+
+      // Track stats
+      if (damage > 0) {
+        enemiesWithEffects++;
+        totalDamageDealt += damage;
+      }
+
+      // Add death message if needed
+      if (hasDied) {
+        deathMessages.push(`${enemy.name} has been burned to death! 💀🔥`);
+      }
+
+      return updatedEnemy;
+    }
+
+    return enemy;
+  });
+
+  // Then process all derivative effects (scorch, inferno, pyroclasm)
+  updatedEnemies = processStatusEffects(updatedEnemies, effectMessages);
 
   // Create appropriate message based on effects applied
   const message =
@@ -786,6 +879,64 @@ const ENEMY_REGISTRY = {
 };
 
 /**
+ * Creates a single enemy instance with specified properties
+ */
+function createEnemy(
+  id: number,
+  name: string,
+  hp: number,
+  tier: EnemyTier,
+  modifier: string = ''
+): Enemy {
+  return {
+    id,
+    name: modifier ? `${name} ${modifier}` : name,
+    hp,
+    maxHp: hp,
+    burnStacks: 0,
+    scorchLevel: 0,
+    infernoLevel: 0,
+    hasPyroclasm: false,
+    isDead: false,
+    tier,
+  };
+}
+
+/**
+ * Selects a random enemy from a specified tier
+ */
+function selectRandomEnemyFromTier(tier: EnemyTier): {
+  name: string;
+  baseHp: number;
+} {
+  const registry = ENEMY_REGISTRY[tier];
+  return registry[Math.floor(random() * registry.length)];
+}
+
+/**
+ * Creates enemies for a given tier, count, and HP multiplier
+ */
+function createEnemiesForTier(
+  tier: EnemyTier,
+  count: number,
+  hpMultiplier: number,
+  baseId: number,
+  modifier: string = ''
+): Enemy[] {
+  const enemies: Enemy[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const randomEnemy = selectRandomEnemyFromTier(tier);
+    const hp = Math.round(randomEnemy.baseHp * hpMultiplier);
+    const id = baseId + enemies.length;
+
+    enemies.push(createEnemy(id, randomEnemy.name, hp, tier, modifier));
+  }
+
+  return enemies;
+}
+
+/**
  * Current wave number
  */
 let currentWave = 1;
@@ -829,65 +980,30 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
   let fodderCount = totalEnemies - eliteCount - mediumCount;
 
   // Add fodder enemies
-  for (let i = 0; i < fodderCount; i++) {
-    const randomFodder =
-      ENEMY_REGISTRY.fodder[
-        Math.floor(random() * ENEMY_REGISTRY.fodder.length)
-      ];
-    const hp = Math.round(randomFodder.baseHp * hpMultiplier);
-    enemies.push({
-      id: timeNow + enemies.length,
-      name: randomFodder.name,
-      hp,
-      maxHp: hp,
-      burnStacks: 0,
-      scorchLevel: 0,
-      infernoLevel: 0,
-      hasPyroclasm: false,
-      isDead: false,
-      tier: 'fodder' as EnemyTier,
-    });
-  }
+  enemies.push(
+    ...createEnemiesForTier('fodder', fodderCount, hpMultiplier, timeNow)
+  );
 
   // Add medium enemies
-  for (let i = 0; i < mediumCount; i++) {
-    const randomMedium =
-      ENEMY_REGISTRY.medium[
-        Math.floor(random() * ENEMY_REGISTRY.medium.length)
-      ];
-    const hp = Math.round(randomMedium.baseHp * hpMultiplier);
-    enemies.push({
-      id: timeNow + enemies.length,
-      name: randomMedium.name,
-      hp,
-      maxHp: hp,
-      burnStacks: 0,
-      scorchLevel: 0,
-      infernoLevel: 0,
-      hasPyroclasm: false,
-      isDead: false,
-      tier: 'medium' as EnemyTier,
-    });
-  }
+  enemies.push(
+    ...createEnemiesForTier(
+      'medium',
+      mediumCount,
+      hpMultiplier,
+      timeNow + enemies.length
+    )
+  );
 
   // Add elite enemies
-  for (let i = 0; i < eliteCount; i++) {
-    const randomElite =
-      ENEMY_REGISTRY.elite[Math.floor(random() * ENEMY_REGISTRY.elite.length)];
-    const hp = Math.round(randomElite.baseHp * hpMultiplier);
-    enemies.push({
-      id: timeNow + enemies.length,
-      name: randomElite.name + ' (Elite)',
-      hp,
-      maxHp: hp,
-      burnStacks: 0,
-      scorchLevel: 0,
-      infernoLevel: 0,
-      hasPyroclasm: false,
-      isDead: false,
-      tier: 'elite' as EnemyTier,
-    });
-  }
+  enemies.push(
+    ...createEnemiesForTier(
+      'elite',
+      eliteCount,
+      hpMultiplier,
+      timeNow + enemies.length,
+      ' (Elite)'
+    )
+  );
 
   // Tag enemies with wave number if beyond wave 1
   if (wave > 1) {
@@ -914,18 +1030,7 @@ function generateBossWave(wave: number, hpMultiplier: number): Enemy[] {
   const bossHp = Math.round(boss.baseHp * hpMultiplier * 1.2);
 
   // Add the boss
-  enemies.push({
-    id: timeNow,
-    name: boss.name,
-    hp: bossHp,
-    maxHp: bossHp,
-    burnStacks: 0,
-    scorchLevel: 0,
-    infernoLevel: 0,
-    hasPyroclasm: false,
-    isDead: false,
-    tier: 'boss' as EnemyTier,
-  });
+  enemies.push(createEnemy(timeNow, boss.name, bossHp, 'boss'));
 
   // Add some fodder minions to accompany the boss
   const minionCount = Math.min(2 + Math.floor(wave / 5), 4); // More minions in higher waves
@@ -938,18 +1043,9 @@ function generateBossWave(wave: number, hpMultiplier: number): Enemy[] {
     const randomMinion = registry[Math.floor(random() * registry.length)];
     const hp = Math.round(randomMinion.baseHp * hpMultiplier * 0.8); // Minions are slightly weaker
 
-    enemies.push({
-      id: timeNow + i + 1,
-      name: `${randomMinion.name} Minion`,
-      hp,
-      maxHp: hp,
-      burnStacks: 0,
-      scorchLevel: 0,
-      infernoLevel: 0,
-      hasPyroclasm: false,
-      isDead: false,
-      tier: tier as EnemyTier,
-    });
+    enemies.push(
+      createEnemy(timeNow + i + 1, `${randomMinion.name} Minion`, hp, tier)
+    );
   }
 
   return enemies;
@@ -998,20 +1094,13 @@ export function spawnRandomEnemy(): Enemy {
     baseHp * waveMultiplier * (1 - hpVariance / 2 + random() * hpVariance)
   );
 
-  return {
-    id: Date.now(),
-    name:
-      randomEnemy.name +
+  return createEnemy(
+    Date.now(),
+    randomEnemy.name +
       (tier === 'elite' ? ' (Elite)' : tier === 'boss' ? '' : ''),
-    hp: randomHp,
-    maxHp: randomHp,
-    burnStacks: 0,
-    scorchLevel: 0,
-    infernoLevel: 0,
-    hasPyroclasm: false,
-    isDead: false,
-    tier,
-  };
+    randomHp,
+    tier
+  );
 }
 
 /**
@@ -1026,47 +1115,16 @@ export function createInitialEnemies(): Enemy[] {
   const fodderCount = 2 + Math.floor(random() * 2); // 2-3 fodder enemies
 
   // Add fodder enemies
-  for (let i = 0; i < fodderCount; i++) {
-    const randomFodder =
-      ENEMY_REGISTRY.fodder[
-        Math.floor(random() * ENEMY_REGISTRY.fodder.length)
-      ];
-    const hp = Math.floor(randomFodder.baseHp * 0.8); // Slightly reduced HP for the initial enemies
-
-    enemies.push({
-      id: timeNow + i,
-      name: randomFodder.name,
-      hp,
-      maxHp: hp,
-      burnStacks: 0,
-      scorchLevel: 0,
-      infernoLevel: 0,
-      hasPyroclasm: false,
-      isDead: false,
-      tier: 'fodder',
-    });
-  }
+  enemies.push(...createEnemiesForTier('fodder', fodderCount, 0.8, timeNow));
 
   // 50% chance to add a medium enemy if we only have 2 fodder enemies
   if (fodderCount === 2 && random() > 0.5) {
-    const randomMedium =
-      ENEMY_REGISTRY.medium[
-        Math.floor(random() * ENEMY_REGISTRY.medium.length)
-      ];
+    const randomMedium = selectRandomEnemyFromTier('medium');
     const hp = Math.floor(randomMedium.baseHp * 0.7); // Reduced HP for the initial medium enemy
 
-    enemies.push({
-      id: timeNow + fodderCount,
-      name: randomMedium.name,
-      hp,
-      maxHp: hp,
-      burnStacks: 0,
-      scorchLevel: 0,
-      infernoLevel: 0,
-      hasPyroclasm: false,
-      isDead: false,
-      tier: 'medium',
-    });
+    enemies.push(
+      createEnemy(timeNow + fodderCount, randomMedium.name, hp, 'medium')
+    );
   }
 
   return enemies;
