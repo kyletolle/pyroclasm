@@ -772,46 +772,60 @@ export function spawnRandomEnemy(): Enemy {
 
 /**
  * Creates initial enemies for the game
+ * Randomly selects from easier enemies to ensure a balanced start
  */
 export function createInitialEnemies(): Enemy[] {
-  return [
-    {
-      id: 1,
-      name: 'Kobold',
-      hp: 120,
-      maxHp: 120,
+  const enemies: Enemy[] = [];
+  const timeNow = Date.now();
+
+  // Select 2-3 fodder enemies for the initial wave
+  const fodderCount = 2 + Math.floor(Math.random() * 2); // 2-3 fodder enemies
+
+  // Add fodder enemies
+  for (let i = 0; i < fodderCount; i++) {
+    const randomFodder =
+      ENEMY_REGISTRY.fodder[
+        Math.floor(Math.random() * ENEMY_REGISTRY.fodder.length)
+      ];
+    const hp = Math.floor(randomFodder.baseHp * 0.8); // Slightly reduced HP for the initial enemies
+
+    enemies.push({
+      id: timeNow + i,
+      name: randomFodder.name,
+      hp,
+      maxHp: hp,
       burnStacks: 0,
       scorchLevel: 0,
       infernoLevel: 0,
       hasPyroclasm: false,
       isDead: false,
       tier: 'fodder',
-    },
-    {
-      id: 2,
-      name: 'Goblin',
-      hp: 200,
-      maxHp: 200,
+    });
+  }
+
+  // 50% chance to add a medium enemy if we only have 2 fodder enemies
+  if (fodderCount === 2 && Math.random() > 0.5) {
+    const randomMedium =
+      ENEMY_REGISTRY.medium[
+        Math.floor(Math.random() * ENEMY_REGISTRY.medium.length)
+      ];
+    const hp = Math.floor(randomMedium.baseHp * 0.7); // Reduced HP for the initial medium enemy
+
+    enemies.push({
+      id: timeNow + fodderCount,
+      name: randomMedium.name,
+      hp,
+      maxHp: hp,
       burnStacks: 0,
       scorchLevel: 0,
       infernoLevel: 0,
       hasPyroclasm: false,
       isDead: false,
       tier: 'medium',
-    },
-    {
-      id: 3,
-      name: 'Dragon Whelp',
-      hp: 500,
-      maxHp: 500,
-      burnStacks: 0,
-      scorchLevel: 0,
-      infernoLevel: 0,
-      hasPyroclasm: false,
-      isDead: false,
-      tier: 'elite',
-    },
-  ];
+    });
+  }
+
+  return enemies;
 }
 
 /**
