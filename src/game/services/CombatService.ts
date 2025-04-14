@@ -409,11 +409,15 @@ export function applyAttack(
     const combustionDamage =
       burnStacksToConvert * STATUS_EFFECTS.burn.baseDamagePerStack;
 
-    let updatedEnemy = {
+    // Create a new enemy object with updated HP and burn stacks
+    const updatedEnemy = {
       ...targetEnemy,
       burnStacks: remainingBurnStacks,
       hp: Math.max(0, targetEnemy.hp - combustionDamage),
     };
+
+    // Update the enemy in the array
+    updatedEnemies[targetIndex] = updatedEnemy;
 
     effectMessages.push(`💥 Burn stacks combust on ${targetEnemy.name}!`);
 
