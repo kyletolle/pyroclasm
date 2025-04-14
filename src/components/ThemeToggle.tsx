@@ -19,7 +19,9 @@ export function ThemeToggle({ className = '' }: Props) {
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      <span className="text-xl">{isDark ? '🌞' : '🌙'}</span>
+      <span className="text-xl">
+        {isDark ? '🌞' : '🌜'}
+      </span>
     </button>
   );
 }
