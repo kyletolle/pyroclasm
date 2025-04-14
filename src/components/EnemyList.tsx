@@ -40,7 +40,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
           : 'border-orange-500 border-2',
         background: isDark ? 'bg-red-900 bg-opacity-40' : 'bg-red-100',
         icon: '🌋',
-        ringColor: isDark ? 'rgba(249, 115, 22, 0.7)' : 'rgba(249, 115, 22, 0.7)', // orange
+        ringColor: isDark
+          ? 'rgba(249, 115, 22, 0.7)'
+          : 'rgba(249, 115, 22, 0.7)', // orange
       };
     }
 
@@ -51,7 +53,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
           border: isDark ? 'border-gray-600' : 'border-gray-300',
           background: '',
           icon: '👤',
-          ringColor: isDark ? 'rgba(156, 163, 175, 0.7)' : 'rgba(156, 163, 175, 0.7)', // gray
+          ringColor: isDark
+            ? 'rgba(156, 163, 175, 0.7)'
+            : 'rgba(156, 163, 175, 0.7)', // gray
         };
       case 'medium':
         return {
@@ -59,7 +63,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
           border: isDark ? 'border-blue-700' : 'border-blue-300',
           background: isDark ? 'bg-blue-900 bg-opacity-20' : 'bg-blue-50',
           icon: '🛡️',
-          ringColor: isDark ? 'rgba(59, 130, 246, 0.7)' : 'rgba(59, 130, 246, 0.7)', // blue
+          ringColor: isDark
+            ? 'rgba(59, 130, 246, 0.7)'
+            : 'rgba(59, 130, 246, 0.7)', // blue
         };
       case 'elite':
         return {
@@ -67,7 +73,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
           border: isDark ? 'border-purple-700' : 'border-purple-300',
           background: isDark ? 'bg-purple-900 bg-opacity-20' : 'bg-purple-50',
           icon: '⚔️',
-          ringColor: isDark ? 'rgba(168, 85, 247, 0.7)' : 'rgba(168, 85, 247, 0.7)', // purple
+          ringColor: isDark
+            ? 'rgba(168, 85, 247, 0.7)'
+            : 'rgba(168, 85, 247, 0.7)', // purple
         };
       case 'boss':
         return {
@@ -77,7 +85,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
             : 'border-red-500 border-2',
           background: isDark ? 'bg-red-900 bg-opacity-30' : 'bg-red-50',
           icon: '👑',
-          ringColor: isDark ? 'rgba(239, 68, 68, 0.7)' : 'rgba(239, 68, 68, 0.7)', // red
+          ringColor: isDark
+            ? 'rgba(239, 68, 68, 0.7)'
+            : 'rgba(239, 68, 68, 0.7)', // red
         };
       default:
         return baseStyles;
@@ -121,21 +131,25 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selected || enemies.length === 0) return;
-      
+
       const livingEnemies = enemies.filter(e => !e.isDead);
       if (livingEnemies.length === 0) return;
-      
-      const currentIndex = livingEnemies.findIndex(enemy => enemy.id === selected.id);
+
+      const currentIndex = livingEnemies.findIndex(
+        enemy => enemy.id === selected.id
+      );
       let nextIndex = currentIndex;
 
       switch (e.key) {
         case 'ArrowUp':
         case 'ArrowLeft':
-          nextIndex = currentIndex > 0 ? currentIndex - 1 : livingEnemies.length - 1;
+          nextIndex =
+            currentIndex > 0 ? currentIndex - 1 : livingEnemies.length - 1;
           break;
         case 'ArrowDown':
         case 'ArrowRight':
-          nextIndex = currentIndex < livingEnemies.length - 1 ? currentIndex + 1 : 0;
+          nextIndex =
+            currentIndex < livingEnemies.length - 1 ? currentIndex + 1 : 0;
           break;
         default:
           return;
@@ -156,7 +170,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
   // Scroll selected enemy into view
   useEffect(() => {
     if (selected && listRef.current) {
-      const selectedElement = listRef.current.querySelector(`[data-enemy-id="${selected.id}"]`);
+      const selectedElement = listRef.current.querySelector(
+        `[data-enemy-id="${selected.id}"]`
+      );
       selectedElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [selected]);
@@ -171,16 +187,21 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
           const isSelected = selected?.id === enemy.id && !enemy.isDead;
 
           // Style object for the ring pulse animation with color
-          const customRingStyles = isSelected && tierStyles.ringColor ? {
-            '--pulse-color': tierStyles.ringColor
-          } as React.CSSProperties : {};
+          const customRingStyles =
+            isSelected && tierStyles.ringColor
+              ? ({
+                  '--pulse-color': tierStyles.ringColor,
+                } as React.CSSProperties)
+              : {};
 
           return (
             <li
               key={enemy.id}
               data-enemy-id={enemy.id}
               className={`p-2 border rounded ${enemy.isDead ? 'cursor-default opacity-70' : 'cursor-pointer'} ${
-                isSelected ? `ring-2 ring-offset-1 ${isSelected && !enemy.isDead ? 'pulse-ring-custom' : ''}` : ''
+                isSelected
+                  ? `ring-2 ring-offset-1 ${isSelected && !enemy.isDead ? 'pulse-ring-custom' : ''}`
+                  : ''
               } ${
                 isSelected
                   ? isDark
@@ -198,7 +219,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                   {isSelected && !enemy.isDead && (
                     <span className="text-green-500 mr-2 pulse-arrow">▶</span>
                   )}
-                  
+
                   {!enemy.isDead && tierStyles.icon && (
                     <span
                       className="mr-2"
@@ -207,7 +228,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                       {tierStyles.icon}
                     </span>
                   )}
-                  
+
                   <span>
                     {enemy.name}{' '}
                     {enemy.isDead ? (
