@@ -116,12 +116,15 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
         {enemies.map(enemy => {
           const tierStyles = getTierStyles(enemy);
           const statusEffects = getStatusEffects(enemy);
+          const isSelected = selected?.id === enemy.id && !enemy.isDead;
 
           return (
             <li
               key={enemy.id}
               className={`p-2 border rounded ${enemy.isDead ? 'cursor-default opacity-70' : 'cursor-pointer'} ${
-                selected?.id === enemy.id && !enemy.isDead
+                isSelected ? 'ring-2 ring-offset-1 ring-green-500' : ''
+              } ${
+                isSelected
                   ? isDark
                     ? 'bg-red-900 border-red-500'
                     : 'bg-red-200 border-red-500'
@@ -140,6 +143,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                     </span>
                   )}
                   <span>
+                    {isSelected && (
+                      <span className="text-green-500 mr-1">▶</span>
+                    )}
                     {enemy.name}{' '}
                     {enemy.isDead ? (
                       <span className="font-bold">💀 Defeated</span>
