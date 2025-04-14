@@ -181,6 +181,46 @@ function App() {
     setAutoSpawnWaves(prev => !prev);
   };
 
+  // Handler for clearing the action log
+  const handleClearLog = () => {
+    setLog([]);
+  };
+
+  // Handler for processing a single turn manually
+  const handleManualTick = () => {
+    // Process a single turn using the skipTurn function
+    const result = skipTurn(enemies);
+    setEnemies(result.updatedEnemies);
+
+    // Add messages to the log
+    if (result.enemiesAffected > 0) {
+      setLog(prev => [...prev, result.message]);
+    }
+
+    if (result.deathMessages.length > 0) {
+      setLog(prev => [...prev, ...result.deathMessages]);
+    }
+
+    if (result.effectMessages.length > 0) {
+      setLog(prev => [...prev, ...result.effectMessages]);
+    }
+
+    // Auto-select another enemy if the selected enemy died
+    if (
+      selectedEnemy &&
+      result.updatedEnemies.find(e => e.id === selectedEnemy.id)?.isDead
+    ) {
+      const newSelected = selectHighestHealthEnemy(result.updatedEnemies);
+      setSelectedEnemy(newSelected);
+    }
+
+    // Check if all enemies are defeated after this turn
+    const allDefeated = areAllEnemiesDefeated(result.updatedEnemies);
+    if (allDefeated && autoSpawnWaves) {
+      handleNextWave();
+    }
+  };
+
   return (
     <div
       className={`w-full min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'} flex justify-center`}
@@ -217,11 +257,15 @@ function App() {
               onToggle={toggleAutoTick}
               tickSpeed={tickSpeed}
               onSpeedChange={handleTickSpeedChange}
+              onManualTick={handleManualTick} // Add the new prop for manual tick advancement
             />
           </div>
         </div>
 
-        <ActionLog log={log} />
+        <ActionLog
+          log={log}
+          onClear={handleClearLog} // Add the new prop for clearing the log
+        />
       </div>
     </div>
   );
