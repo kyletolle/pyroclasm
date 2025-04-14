@@ -21,7 +21,13 @@ export function WaveControls({
   const isDark = theme === 'dark';
 
   return (
-    <div className="flex flex-col gap-2 border rounded p-3 bg-opacity-10 bg-gray-100 dark:bg-gray-800 dark:bg-opacity-20">
+    <div
+      className={`flex flex-col gap-2 border rounded p-3 ${
+        isDark
+          ? 'bg-gray-800 bg-opacity-20 border-gray-700'
+          : 'bg-blue-50 border-blue-200'
+      }`}
+    >
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Wave {waveNumber}</h2>
         <div className="flex items-center gap-2">

@@ -313,7 +313,11 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
         <h2 className="text-xl font-bold mb-2">Enemies</h2>
         <button
           onClick={() => setUsePieChart(!usePieChart)}
-          className="text-xs py-1 px-2 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+          className={`text-xs py-1 px-2 mb-2 rounded ${
+            isDark
+              ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+              : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
+          }`}
         >
           {usePieChart ? 'Use Linear Bar' : 'Use Pie Chart'}
         </button>

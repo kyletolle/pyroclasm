@@ -27,7 +27,13 @@ export function AutoTicker({
   ];
 
   return (
-    <div className="flex flex-col gap-2 border rounded p-3 bg-opacity-10 bg-gray-100 dark:bg-gray-800 dark:bg-opacity-20">
+    <div
+      className={`flex flex-col gap-2 border rounded p-3 ${
+        isDark
+          ? 'bg-gray-800 bg-opacity-20 border-gray-700'
+          : 'bg-blue-50 border-blue-200'
+      }`}
+    >
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Turn Progression</h2>
         <button
@@ -78,7 +84,9 @@ export function AutoTicker({
         </div>
       ) : (
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-sm text-amber-600 dark:text-amber-400">
+          <span
+            className={`text-sm ${isDark ? 'text-amber-400' : 'text-amber-700'}`}
+          >
             Turn processing paused
           </span>
           <button
