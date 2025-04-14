@@ -10,6 +10,11 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Health bar colors */
+  --health-high: #22c55e; /* green-500 */
+  --health-medium: #eab308; /* yellow-500 */
+  --health-low: #ef4444; /* red-500 */
 }
 
 /* Base styles using proper Tailwind v4 syntax */
@@ -106,6 +111,26 @@ button:focus-visible {
   }
 }
 
+/* Health bar animation */
+@keyframes health-change {
+  0% {
+    width: var(--prev-width, 100%);
+  }
+  100% {
+    width: var(--current-width, 0%);
+  }
+}
+
+/* Pie chart animation */
+@keyframes pie-change {
+  0% {
+    --p: var(--prev-percentage, 100);
+  }
+  100% {
+    --p: var(--current-percentage, 0);
+  }
+}
+
 .pulse-ring {
   animation: pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
 }
@@ -119,4 +144,42 @@ button:focus-visible {
 .pulse-arrow {
   animation: pulse-arrow 1.2s ease-in-out infinite;
   display: inline-block;
+}
+
+/* Health bar animation */
+.health-bar-fill {
+  transition: width 0.5s ease-out, background-color 0.5s ease-out;
+}
+
+/* Animated health bar */
+.animate-health-change {
+  animation: health-change 0.5s ease-out forwards;
+}
+
+/* Pie chart health animation */
+.animate-pie-change {
+  animation: pie-change 0.5s ease-out forwards;
+}
+
+/* Pie chart CSS */
+.pie-chart {
+  display: inline-block;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: background-color 0.5s ease-out;
+}
+
+.pie-chart::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    currentColor calc(var(--p, 0) * 1%), 
+    rgba(255, 255, 255, 0.2) 0
+  );
+  mask: radial-gradient(farthest-side, transparent 55%, #000 56%);
+  -webkit-mask: radial-gradient(farthest-side, transparent 55%, #000 56%);
 }

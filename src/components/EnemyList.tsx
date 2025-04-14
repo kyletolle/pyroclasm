@@ -1,6 +1,6 @@
 import { useTheme } from '../context/ThemeContext';
 import { Enemy } from '../game/models/Enemy';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
   enemies: Enemy[];
@@ -12,6 +12,50 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const listRef = useRef<HTMLUListElement>(null);
+  
+  // Store previous health values for animations
+  const [prevHealthValues, setPrevHealthValues] = useState<Record<number, number>>({});
+  
+  // Toggle between health bar styles (false = linear bar, true = pie chart)
+  const [usePieChart, setUsePieChart] = useState<boolean>(false);
+
+  // Update previous health values when enemies change
+  useEffect(() => {
+    const newHealthValues: Record<number, number> = {};
+    
+    enemies.forEach(enemy => {
+      // If we already have a previous value, keep it; otherwise use current health
+      if (prevHealthValues[enemy.id] === undefined) {
+        newHealthValues[enemy.id] = enemy.hp;
+      } else {
+        newHealthValues[enemy.id] = prevHealthValues[enemy.id];
+      }
+    });
+    
+    setPrevHealthValues(newHealthValues);
+    
+    // After animation duration, update previous values to current
+    const timeoutId = setTimeout(() => {
+      const updatedValues: Record<number, number> = {};
+      enemies.forEach(enemy => {
+        updatedValues[enemy.id] = enemy.hp;
+      });
+      setPrevHealthValues(updatedValues);
+    }, 500); // Match animation duration
+    
+    return () => clearTimeout(timeoutId);
+  }, [enemies]);
+
+  // Get health color based on percentage
+  const getHealthColor = (percentage: number): string => {
+    if (percentage > 60) {
+      return 'var(--health-high)';
+    } else if (percentage > 25) {
+      return 'var(--health-medium)';
+    } else {
+      return 'var(--health-low)';
+    }
+  };
 
   // Get tier-specific styling for enemies
   const getTierStyles = (enemy: Enemy) => {
@@ -183,9 +227,84 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
     }
   }, [selected]);
 
+  // Linear health bar component
+  const LinearHealthBar = ({ enemy }: { enemy: Enemy }) => {
+    if (enemy.isDead) return null;
+    
+    const healthPercentage = Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100));
+    const prevPercentage = prevHealthValues[enemy.id] 
+      ? Math.max(0, Math.min(100, (prevHealthValues[enemy.id] / enemy.maxHp) * 100))
+      : healthPercentage;
+    
+    // Determine if we need animation
+    const needsAnimation = prevPercentage !== healthPercentage;
+    const barColor = getHealthColor(healthPercentage);
+    
+    const barStyle = {
+      width: `${healthPercentage}%`,
+      backgroundColor: barColor,
+      '--prev-width': `${prevPercentage}%`,
+      '--current-width': `${healthPercentage}%`
+    } as React.CSSProperties;
+    
+    return (
+      <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
+        <div 
+          className={`h-full ${needsAnimation ? 'animate-health-change' : 'health-bar-fill'}`}
+          style={barStyle}
+        >
+        </div>
+        <div className="text-xs text-center mt-1">
+          {enemy.hp}/{enemy.maxHp} ({Math.round(healthPercentage)}%)
+        </div>
+      </div>
+    );
+  };
+  
+  // Pie chart health component
+  const PieChartHealth = ({ enemy }: { enemy: Enemy }) => {
+    if (enemy.isDead) return null;
+    
+    const healthPercentage = Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100));
+    const prevPercentage = prevHealthValues[enemy.id] 
+      ? Math.max(0, Math.min(100, (prevHealthValues[enemy.id] / enemy.maxHp) * 100))
+      : healthPercentage;
+    
+    // Determine if we need animation
+    const needsAnimation = prevPercentage !== healthPercentage;
+    const pieColor = getHealthColor(healthPercentage);
+    
+    const pieStyle = {
+      color: pieColor,
+      '--p': healthPercentage,
+      '--prev-percentage': prevPercentage,
+      '--current-percentage': healthPercentage
+    } as React.CSSProperties;
+    
+    return (
+      <div className="flex items-center mt-2 justify-between">
+        <span 
+          className={`pie-chart ${needsAnimation ? 'animate-pie-change' : ''}`} 
+          style={pieStyle}
+        ></span>
+        <div className="text-xs flex-1 ml-2">
+          {enemy.hp}/{enemy.maxHp} ({Math.round(healthPercentage)}%)
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div>
-      <h2 className="text-xl font-bold mb-2">Enemies</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold mb-2">Enemies</h2>
+        <button 
+          onClick={() => setUsePieChart(!usePieChart)} 
+          className="text-xs py-1 px-2 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+        >
+          {usePieChart ? "Use Linear Bar" : "Use Pie Chart"}
+        </button>
+      </div>
       <ul ref={listRef} className="space-y-4">
         {enemies.map(enemy => {
           const tierStyles = getTierStyles(enemy);
@@ -199,22 +318,17 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                   '--pulse-color': tierStyles.ringColor,
                 } as React.CSSProperties)
               : {};
-
+              
           // Get arrow color based on enemy tier
           const getArrowColor = () => {
             if (enemy.hasPyroclasm) return 'text-yellow-400';
-
+            
             switch (enemy.tier) {
-              case 'fodder':
-                return 'text-white';
-              case 'medium':
-                return 'text-blue-300';
-              case 'elite':
-                return isDark ? 'text-purple-300' : 'text-purple-500'; // Brighter purple
-              case 'boss':
-                return 'text-yellow-300';
-              default:
-                return 'text-white';
+              case 'fodder': return 'text-white';
+              case 'medium': return 'text-blue-300';
+              case 'elite': return isDark ? 'text-purple-300' : 'text-purple-500'; // Brighter purple
+              case 'boss': return 'text-yellow-300';
+              default: return 'text-white';
             }
           };
 
@@ -241,11 +355,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                 <div className="flex items-center">
                   {/* Indicator arrow with tier-based color */}
                   {isSelected && !enemy.isDead && (
-                    <span
-                      className={`${getArrowColor()} mr-2 pulse-arrow font-bold`}
-                    >
-                      ▶
-                    </span>
+                    <span className={`${getArrowColor()} mr-2 pulse-arrow font-bold`}>▶</span>
                   )}
 
                   {!enemy.isDead && tierStyles.icon && (
@@ -264,7 +374,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                     {enemy.isDead ? (
                       <span className="font-bold">💀 Defeated</span>
                     ) : (
-                      <span>(HP: {enemy.hp})</span>
+                      <span></span> // Removed HP text since it's now in the health bar
                     )}
                   </span>
                 </div>
@@ -284,6 +394,13 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                   </div>
                 )}
               </div>
+              
+              {/* Health indicators */}
+              {!enemy.isDead && (
+                usePieChart 
+                ? <PieChartHealth enemy={enemy} /> 
+                : <LinearHealthBar enemy={enemy} />
+              )}
             </li>
           );
         })}
