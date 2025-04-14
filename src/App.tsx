@@ -266,13 +266,16 @@ function App() {
           log={log}
           onClear={handleClearLog} // Add the new prop for clearing the log
         />
-        
+
         {/* Copyright and credit footer */}
         <footer className="col-span-full mt-8 text-center text-sm border-t pt-4">
-          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-            © 2025 Kyle Tolle · <a 
-              href="https://kyletolle.com" 
-              target="_blank" 
+          <p
+            className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+          >
+            © 2025 Kyle Tolle ·{' '}
+            <a
+              href="https://kyletolle.com"
+              target="_blank"
               rel="noopener noreferrer"
               className={`hover:underline ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}
             >
