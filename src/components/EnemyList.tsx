@@ -180,7 +180,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
   return (
     <div>
       <h2 className="text-xl font-bold mb-2">Enemies</h2>
-      <ul ref={listRef} className="space-y-2">
+      <ul ref={listRef} className="space-y-4">
         {enemies.map(enemy => {
           const tierStyles = getTierStyles(enemy);
           const statusEffects = getStatusEffects(enemy);
@@ -198,9 +198,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
             <li
               key={enemy.id}
               data-enemy-id={enemy.id}
-              className={`p-2 border rounded ${enemy.isDead ? 'cursor-default opacity-70' : 'cursor-pointer'} ${
+              className={`p-3 border-2 rounded-md ${enemy.isDead ? 'cursor-default opacity-70' : 'cursor-pointer'} ${
                 isSelected
-                  ? `ring-2 ring-offset-1 ${isSelected && !enemy.isDead ? 'pulse-ring-custom' : ''}`
+                  ? `ring-2 ring-offset-2 ${isSelected && !enemy.isDead ? 'pulse-ring-custom' : ''}`
                   : ''
               } ${
                 isSelected
