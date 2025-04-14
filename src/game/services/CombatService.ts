@@ -456,38 +456,104 @@ export function applyAttack(
     let updatedEnemies = [...enemies];
     const targetIndex = updatedEnemies.findIndex(e => e.id === targetEnemy.id);
 
-    if (targetEnemy.burnStacks === 0) {
+    // Make sure we're working with the most current version of the target enemy
+    const currentTargetEnemy = updatedEnemies[targetIndex];
+
+    // Log the enemy's current burn stacks for debugging
+    console.log(
+      `Combustion on ${currentTargetEnemy.name} with burn stacks: ${currentTargetEnemy.burnStacks}`
+    );
+
+    if (currentTargetEnemy.burnStacks === 0) {
+      // Try using a basic fire attack instead to apply burn stacks
+      const fireAttack: DamageEffect = 'fire';
+      const damage = BASE_DAMAGE[fireAttack];
+      const burnStacksToAdd =
+        STATUS_EFFECTS.burn.stacksApplied[fireAttack] || 0;
+
+      // Apply damage and burn stacks
+      const updatedEnemy = {
+        ...currentTargetEnemy,
+        hp: Math.max(0, currentTargetEnemy.hp - damage),
+        burnStacks: currentTargetEnemy.burnStacks + burnStacksToAdd,
+      };
+
+      updatedEnemies[targetIndex] = updatedEnemy;
+
+      // Process derivative effects
+      const afterScorch = processScorchProc(updatedEnemy, effectMessages);
+      updatedEnemies[targetIndex] = afterScorch;
+
+      const {
+        updatedTarget: afterInferno,
+        updatedEnemies: afterInfernoEnemies,
+      } = processInfernoProc(afterScorch, updatedEnemies, effectMessages);
+
+      updatedEnemies = afterInfernoEnemies.map(e =>
+        e.id === afterInferno.id ? afterInferno : e
+      );
+
+      updatedEnemies = processPyroclasmProc(
+        afterInferno,
+        updatedEnemies,
+        effectMessages
+      );
+
       return {
         updatedEnemies,
-        message: `Combustion had no effect on ${targetEnemy.name} - no burn stacks to combust!`,
-        deathMessages: [],
-        effectMessages: [],
+        message: `Combustion converted to Fire attack on ${currentTargetEnemy.name} for ${damage} damage and ${burnStacksToAdd} burn stacks!`,
+        deathMessages,
+        effectMessages,
       };
     }
 
-    const burnStacksToConvert = Math.floor(targetEnemy.burnStacks / 2);
-    const remainingBurnStacks = targetEnemy.burnStacks - burnStacksToConvert;
-    const combustionDamage =
-      burnStacksToConvert * STATUS_EFFECTS.burn.baseDamagePerStack;
+    const burnStacksToConvert = Math.floor(currentTargetEnemy.burnStacks / 2);
+    const remainingBurnStacks = currentTargetEnemy.burnStacks - burnStacksToConvert;
+    
+    // Calculate combustion damage with modifiers from status effects
+    let combustionDamage = burnStacksToConvert * STATUS_EFFECTS.burn.baseDamagePerStack;
+    
+    // Apply scorch multiplier if applicable
+    if (currentTargetEnemy.scorchLevel > 0) {
+      const scorchMultiplier = Math.pow(
+        STATUS_EFFECTS.scorch.burnDamageMultiplier,
+        currentTargetEnemy.scorchLevel
+      );
+      combustionDamage *= scorchMultiplier;
+    }
+    
+    // Apply inferno multiplier if applicable
+    if (currentTargetEnemy.infernoLevel > 0) {
+      const infernoMultiplier = Math.pow(
+        STATUS_EFFECTS.inferno.scorchMultiplier,
+        currentTargetEnemy.infernoLevel
+      );
+      combustionDamage *= infernoMultiplier;
+    }
+    
+    // Round the final damage value
+    combustionDamage = Math.round(combustionDamage);
 
     // Create a new enemy object with updated HP and burn stacks
     const updatedEnemy = {
-      ...targetEnemy,
+      ...currentTargetEnemy,
       burnStacks: remainingBurnStacks,
-      hp: Math.max(0, targetEnemy.hp - combustionDamage),
+      hp: Math.max(0, currentTargetEnemy.hp - combustionDamage),
     };
 
     // Update the enemy in the array
     updatedEnemies[targetIndex] = updatedEnemy;
 
-    effectMessages.push(`💥 Burn stacks combust on ${targetEnemy.name}!`);
+    effectMessages.push(
+      `💥 Burn stacks combust on ${currentTargetEnemy.name}! ${burnStacksToConvert} stacks converted to ${combustionDamage} immediate damage!`
+    );
 
     // Check if enemy died from combustion damage
     const { enemy: afterDeathCheck, hasDied } = checkForDeath(updatedEnemy);
 
     if (hasDied) {
       deathMessages.push(
-        `${targetEnemy.name} has been burned to death by Combustion! 💀🔥`
+        `${currentTargetEnemy.name} has been burned to death by Combustion! 💀🔥`
       );
     }
 
@@ -514,7 +580,7 @@ export function applyAttack(
 
     return {
       updatedEnemies,
-      message: `Used Combustion on ${targetEnemy.name}, converting ${burnStacksToConvert} burn stacks to ${combustionDamage} immediate damage!`,
+      message: `Used Combustion on ${currentTargetEnemy.name}, converting ${burnStacksToConvert} burn stacks to ${combustionDamage} immediate damage!`,
       deathMessages,
       effectMessages,
     };
