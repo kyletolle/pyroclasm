@@ -5,6 +5,7 @@ interface Props {
   onToggle: () => void;
   tickSpeed: number;
   onSpeedChange: (speed: number) => void;
+  onManualTick: () => void; // Added prop for manual tick advancement
 }
 
 export function AutoTicker({
@@ -12,6 +13,7 @@ export function AutoTicker({
   onToggle,
   tickSpeed,
   onSpeedChange,
+  onManualTick,
 }: Props) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -75,8 +77,21 @@ export function AutoTicker({
           </span>
         </div>
       ) : (
-        <div className="mt-1 flex items-center text-sm text-amber-600 dark:text-amber-400">
-          <span>Turn processing paused</span>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-sm text-amber-600 dark:text-amber-400">
+            Turn processing paused
+          </span>
+          <button
+            onClick={onManualTick}
+            className={`px-3 py-1 rounded text-sm font-medium ${
+              isDark
+                ? 'bg-blue-700 hover:bg-blue-800 text-white'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+            title="Process a single turn manually"
+          >
+            Next Turn →
+          </button>
         </div>
       )}
     </div>
