@@ -28,6 +28,7 @@ export const STATUS_EFFECTS = {
     burnDamageMultiplier: 1.5, // Each level increases burn damage by 50%
     maxLevel: 5,
     additionalBurnStacks: 1, // Each scorch level add adds this many burn stacks
+    decayRate: 0.05, // 5% chance to decay each turn (significantly reduced from original)
   },
 
   // 3rd derivative - Accelerate scorch and spread burn
@@ -36,10 +37,11 @@ export const STATUS_EFFECTS = {
     maxLevel: 3,
     spreadRadius: 1, // Number of other enemies to potentially spread to
     burnStacksToSpread: 2, // Number of burn stacks to spread to other enemies
+    decayRate: 0.03, // 3% chance to decay each turn (significantly reduced from original)
     // Chance for inferno effects to proc (per scorch level)
     chanceToProc: {
       inferno: 0.1, // 10% chance per scorch level
-      pyroclasm: 0.02, // 2% chance per burn stack
+      pyroclasm: 0.00005, // 0.005% chance per burn stack (vastly reduced)
     },
   },
 

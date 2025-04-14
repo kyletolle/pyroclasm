@@ -364,12 +364,22 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
       enemiesWithEffects++;
       totalDamageDealt += burnDamage;
 
-      // Apply burn damage
+      // Apply burn damage and reduce burn stacks
+      const updatedBurnStacks = Math.max(0, enemy.burnStacks - 1);
+
+      // If burn stacks reach 0, reset scorch and inferno levels
+      const updatedScorchLevel =
+        updatedBurnStacks === 0 ? 0 : enemy.scorchLevel;
+      const updatedInfernoLevel =
+        updatedBurnStacks === 0 ? 0 : enemy.infernoLevel;
+
       const damagedEnemy = {
         ...enemy,
         hp: Math.max(0, enemy.hp - burnDamage),
-        burnStacks: Math.max(0, enemy.burnStacks - 1), // Reduce burn stacks by 1
-        hasPyroclasm: enemy.hasPyroclasm ? enemy.burnStacks > 1 : false, // Pyroclasm fades when burn stacks are gone
+        burnStacks: updatedBurnStacks,
+        scorchLevel: updatedScorchLevel,
+        infernoLevel: updatedInfernoLevel,
+        hasPyroclasm: enemy.hasPyroclasm ? updatedBurnStacks > 0 : false, // Pyroclasm fades when burn stacks are gone
       };
 
       // Check if enemy died from this burn damage
@@ -384,7 +394,7 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
     return enemy;
   });
 
-  // Then process all derivative effects for living enemies
+  // Then process all derivative effects for living enemies with burn stacks
   for (const enemy of updatedEnemies.filter(
     e => !e.isDead && e.burnStacks > 0
   )) {
@@ -397,17 +407,14 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
     );
 
     // Process inferno proc
-    const { updatedEnemies: afterInfernoEnemies } = processInfernoProc(
-      afterScorch,
-      updatedEnemies,
-      effectMessages
-    );
+    const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
+      processInfernoProc(afterScorch, updatedEnemies, effectMessages);
 
     updatedEnemies = afterInfernoEnemies;
 
     // Process pyroclasm
     updatedEnemies = processPyroclasmProc(
-      enemy,
+      afterInferno,
       updatedEnemies,
       effectMessages
     );
