@@ -8,6 +8,7 @@ export interface AttackResult {
   updatedEnemies: Enemy[];
   message: string;
   deathMessages: string[];
+  effectMessages: string[];
 }
 
 // Interface for the result of skipping a turn
@@ -17,6 +18,7 @@ export interface SkipTurnResult {
   enemiesAffected: number;
   message: string;
   deathMessages: string[];
+  effectMessages: string[];
 }
 
 /**
@@ -29,7 +31,10 @@ function checkForDeath(enemy: Enemy): { enemy: Enemy; hasDied: boolean } {
       enemy: {
         ...enemy,
         hp: 0,
-        burnStacks: 0, // Clear burn stacks on death
+        burnStacks: 0,
+        scorchLevel: 0,
+        jerkLevel: 0,
+        hasPyroclasm: false,
         isDead: true,
       },
       hasDied: true,
@@ -37,6 +42,204 @@ function checkForDeath(enemy: Enemy): { enemy: Enemy; hasDied: boolean } {
   }
 
   return { enemy, hasDied: false };
+}
+
+/**
+ * Rolls a probability check
+ */
+function rollProbability(chance: number): boolean {
+  return Math.random() < chance;
+}
+
+/**
+ * Get random enemy from a list excluding a specific enemy
+ */
+function getRandomEnemy(enemies: Enemy[], excludeId: number): Enemy | null {
+  const liveEnemies = enemies.filter(e => !e.isDead && e.id !== excludeId);
+  if (liveEnemies.length === 0) return null;
+  return liveEnemies[Math.floor(Math.random() * liveEnemies.length)];
+}
+
+/**
+ * Process scorch proc chance based on burn stacks
+ */
+function processScorchProc(enemy: Enemy, effectMessages: string[]): Enemy {
+  if (enemy.isDead) return enemy;
+
+  // Each burn stack has a chance to proc scorch
+  const scorchChance = STATUS_EFFECTS.burn.chanceToProc.scorch;
+  const procCount = Array(enemy.burnStacks)
+    .fill(0)
+    .filter(() => rollProbability(scorchChance)).length;
+
+  if (procCount > 0) {
+    const newScorchLevel = Math.min(
+      enemy.scorchLevel + procCount,
+      STATUS_EFFECTS.scorch.maxLevel
+    );
+    if (newScorchLevel > enemy.scorchLevel) {
+      // Add additional burn stacks from scorch
+      const additionalBurnStacks =
+        STATUS_EFFECTS.scorch.additionalBurnStacks *
+        (newScorchLevel - enemy.scorchLevel);
+
+      effectMessages.push(
+        `🔥🔥 ${enemy.name} is scorched! Burn damage increased by ${Math.round((STATUS_EFFECTS.scorch.burnDamageMultiplier - 1) * 100)}%!`
+      );
+
+      return {
+        ...enemy,
+        scorchLevel: newScorchLevel,
+        burnStacks: enemy.burnStacks + additionalBurnStacks,
+      };
+    }
+  }
+
+  return enemy;
+}
+
+/**
+ * Process jerk proc chance based on scorch level
+ */
+function processJerkProc(
+  enemy: Enemy,
+  allEnemies: Enemy[],
+  effectMessages: string[]
+): { updatedTarget: Enemy; updatedEnemies: Enemy[] } {
+  if (enemy.isDead || enemy.scorchLevel === 0) {
+    return { updatedTarget: enemy, updatedEnemies: allEnemies };
+  }
+
+  const jerkChance = STATUS_EFFECTS.jerk.chanceToProc.jerk;
+  const procCount = Array(enemy.scorchLevel)
+    .fill(0)
+    .filter(() => rollProbability(jerkChance)).length;
+
+  if (procCount > 0) {
+    const newJerkLevel = Math.min(
+      enemy.jerkLevel + procCount,
+      STATUS_EFFECTS.jerk.maxLevel
+    );
+    if (newJerkLevel > enemy.jerkLevel) {
+      effectMessages.push(
+        `⚡🔥 ${enemy.name} experiences jerk! Scorch accelerates and burn spreads!`
+      );
+
+      let updatedEnemies = [...allEnemies];
+      const targetEnemy = {
+        ...enemy,
+        jerkLevel: newJerkLevel,
+      };
+
+      // Spread burn to other enemies when jerk procs
+      const spreadCount = STATUS_EFFECTS.jerk.spreadRadius * procCount;
+      const burnStacksToSpread = STATUS_EFFECTS.jerk.burnStacksToSpread;
+
+      // Try to spread to random enemies
+      for (let i = 0; i < spreadCount; i++) {
+        const targetToSpreadTo = getRandomEnemy(updatedEnemies, enemy.id);
+        if (targetToSpreadTo) {
+          effectMessages.push(
+            `🔥➡️ Burn spreads from ${enemy.name} to ${targetToSpreadTo.name}!`
+          );
+
+          // Update the target in the array
+          updatedEnemies = updatedEnemies.map(e =>
+            e.id === targetToSpreadTo.id
+              ? { ...e, burnStacks: e.burnStacks + burnStacksToSpread }
+              : e
+          );
+        }
+      }
+
+      return {
+        updatedTarget: targetEnemy,
+        updatedEnemies: updatedEnemies.map(e =>
+          e.id === targetEnemy.id ? targetEnemy : e
+        ),
+      };
+    }
+  }
+
+  return { updatedTarget: enemy, updatedEnemies: allEnemies };
+}
+
+/**
+ * Process pyroclasm proc chance
+ */
+function processPyroclasmProc(
+  enemy: Enemy,
+  allEnemies: Enemy[],
+  effectMessages: string[]
+): Enemy[] {
+  if (enemy.isDead || enemy.burnStacks === 0) return allEnemies;
+
+  // Each burn stack has a small chance to trigger pyroclasm
+  const pyroclasmChance = STATUS_EFFECTS.jerk.chanceToProc.pyroclasm;
+  const pyroclasmProc = Array(enemy.burnStacks)
+    .fill(0)
+    .some(() => rollProbability(pyroclasmChance));
+
+  if (pyroclasmProc) {
+    // Catastrophic effect that hits all enemies
+    effectMessages.push(
+      `🌋🌋🌋 PYROCLASM TRIGGERED from ${enemy.name}! The battlefield is engulfed in flames!`
+    );
+
+    return allEnemies.map(e => {
+      if (e.isDead) return e;
+
+      return {
+        ...e,
+        burnStacks: e.burnStacks + STATUS_EFFECTS.pyroclasm.burnStacksApplied,
+        scorchLevel: Math.min(
+          e.scorchLevel + STATUS_EFFECTS.pyroclasm.scorchLevelApplied,
+          STATUS_EFFECTS.scorch.maxLevel
+        ),
+        jerkLevel: Math.min(
+          e.jerkLevel + STATUS_EFFECTS.pyroclasm.jerkLevelApplied,
+          STATUS_EFFECTS.jerk.maxLevel
+        ),
+        hasPyroclasm: true,
+      };
+    });
+  }
+
+  return allEnemies;
+}
+
+/**
+ * Calculate burn damage based on enemy's status effects
+ */
+function calculateBurnDamage(enemy: Enemy): number {
+  if (enemy.burnStacks <= 0) return 0;
+
+  let damage = enemy.burnStacks * STATUS_EFFECTS.burn.baseDamagePerStack;
+
+  // Apply scorch multiplier if applicable
+  if (enemy.scorchLevel > 0) {
+    const scorchMultiplier = Math.pow(
+      STATUS_EFFECTS.scorch.burnDamageMultiplier,
+      enemy.scorchLevel
+    );
+    damage *= scorchMultiplier;
+  }
+
+  // Apply jerk multiplier if applicable
+  if (enemy.jerkLevel > 0) {
+    const jerkMultiplier = Math.pow(
+      STATUS_EFFECTS.jerk.scorchMultiplier,
+      enemy.jerkLevel
+    );
+    damage *= jerkMultiplier;
+  }
+
+  // Pyroclasm adds an additional flat bonus
+  if (enemy.hasPyroclasm) {
+    damage *= 1.5;
+  }
+
+  return Math.round(damage);
 }
 
 /**
@@ -52,6 +255,7 @@ export function applyAttack(
       updatedEnemies: enemies,
       message: 'No enemy selected!',
       deathMessages: [],
+      effectMessages: [],
     };
   }
 
@@ -61,16 +265,18 @@ export function applyAttack(
       updatedEnemies: enemies,
       message: `${targetEnemy.name} is already defeated!`,
       deathMessages: [],
+      effectMessages: [],
     };
   }
 
-  // Calculate damage and burn stacks to apply
+  // Calculate direct damage
   const damage = BASE_DAMAGE[effect];
   const burnStacksToAdd = STATUS_EFFECTS.burn.stacksApplied[effect] || 0;
   const deathMessages: string[] = [];
+  const effectMessages: string[] = [];
 
-  // Update enemies array with new damage and burn stacks
-  const updatedEnemies = enemies.map(enemy => {
+  // Apply direct damage and burn stacks
+  let updatedEnemies = enemies.map(enemy => {
     if (enemy.id === targetEnemy.id) {
       // Apply damage
       const damagedEnemy = {
@@ -80,16 +286,41 @@ export function applyAttack(
       };
 
       // Check if enemy died from this attack
-      const { enemy: finalEnemy, hasDied } = checkForDeath(damagedEnemy);
+      const { enemy: afterDeathCheck, hasDied } = checkForDeath(damagedEnemy);
 
       if (hasDied) {
         deathMessages.push(`${enemy.name} has been defeated! 💀`);
       }
 
-      return finalEnemy;
+      return afterDeathCheck;
     }
     return enemy;
   });
+
+  // Process derivative effects if enemy is still alive
+  const attackedEnemy = updatedEnemies.find(e => e.id === targetEnemy.id);
+  if (attackedEnemy && !attackedEnemy.isDead) {
+    // Process scorch (2nd derivative)
+    const afterScorch = processScorchProc(attackedEnemy, effectMessages);
+
+    // Update enemy in array
+    updatedEnemies = updatedEnemies.map(e =>
+      e.id === attackedEnemy.id ? afterScorch : e
+    );
+
+    // Process jerk (3rd derivative)
+    const { updatedTarget: afterJerk, updatedEnemies: afterJerkEnemies } =
+      processJerkProc(afterScorch, updatedEnemies, effectMessages);
+
+    updatedEnemies = afterJerkEnemies;
+
+    // Process pyroclasm (4th derivative)
+    updatedEnemies = processPyroclasmProc(
+      afterJerk,
+      updatedEnemies,
+      effectMessages
+    );
+  }
 
   // Construct result message
   let message = `Used ${capitalize(effect)} on ${targetEnemy.name} for ${damage} damage.`;
@@ -104,6 +335,7 @@ export function applyAttack(
     updatedEnemies,
     message,
     deathMessages,
+    effectMessages,
   };
 }
 
@@ -114,15 +346,19 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
   let totalDamageDealt = 0;
   let enemiesWithEffects = 0;
   const deathMessages: string[] = [];
+  const effectMessages: string[] = [];
 
   // Process status effects for each enemy
-  const updatedEnemies = enemies.map(enemy => {
+  let updatedEnemies = [...enemies];
+
+  // First apply burn damage to all enemies
+  updatedEnemies = updatedEnemies.map(enemy => {
     // Skip processing for dead enemies
     if (enemy.isDead) return enemy;
 
     if (enemy.burnStacks > 0) {
-      // Calculate burn damage
-      const burnDamage = enemy.burnStacks * STATUS_EFFECTS.burn.damagePerStack;
+      // Calculate burn damage with all modifiers
+      const burnDamage = calculateBurnDamage(enemy);
       enemiesWithEffects++;
       totalDamageDealt += burnDamage;
 
@@ -130,7 +366,8 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
       const damagedEnemy = {
         ...enemy,
         hp: Math.max(0, enemy.hp - burnDamage),
-        burnStacks: enemy.burnStacks - 1,
+        burnStacks: Math.max(0, enemy.burnStacks - 1), // Reduce burn stacks by 1
+        hasPyroclasm: enemy.hasPyroclasm ? enemy.burnStacks > 1 : false, // Pyroclasm fades when burn stacks are gone
       };
 
       // Check if enemy died from this burn damage
@@ -145,6 +382,35 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
     return enemy;
   });
 
+  // Then process all derivative effects for living enemies
+  for (const enemy of updatedEnemies.filter(
+    e => !e.isDead && e.burnStacks > 0
+  )) {
+    // Process scorch proc
+    const afterScorch = processScorchProc(enemy, effectMessages);
+
+    // Update enemy in array
+    updatedEnemies = updatedEnemies.map(e =>
+      e.id === enemy.id ? afterScorch : e
+    );
+
+    // Process jerk proc
+    const { updatedEnemies: afterJerkEnemies } = processJerkProc(
+      afterScorch,
+      updatedEnemies,
+      effectMessages
+    );
+
+    updatedEnemies = afterJerkEnemies;
+
+    // Process pyroclasm
+    updatedEnemies = processPyroclasmProc(
+      enemy,
+      updatedEnemies,
+      effectMessages
+    );
+  }
+
   // Create appropriate message based on effects applied
   const message =
     enemiesWithEffects > 0
@@ -157,6 +423,7 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
     enemiesAffected: enemiesWithEffects,
     message,
     deathMessages,
+    effectMessages,
   };
 }
 
@@ -251,7 +518,11 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
       id: timeNow + enemies.length,
       name: randomFodder.name,
       hp,
+      maxHp: hp,
       burnStacks: 0,
+      scorchLevel: 0,
+      jerkLevel: 0,
+      hasPyroclasm: false,
       isDead: false,
       tier: 'fodder' as EnemyTier,
     });
@@ -268,7 +539,11 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
       id: timeNow + enemies.length,
       name: randomMedium.name,
       hp,
+      maxHp: hp,
       burnStacks: 0,
+      scorchLevel: 0,
+      jerkLevel: 0,
+      hasPyroclasm: false,
       isDead: false,
       tier: 'medium' as EnemyTier,
     });
@@ -285,7 +560,11 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
       id: timeNow + enemies.length,
       name: randomElite.name + ' (Elite)',
       hp,
+      maxHp: hp,
       burnStacks: 0,
+      scorchLevel: 0,
+      jerkLevel: 0,
+      hasPyroclasm: false,
       isDead: false,
       tier: 'elite' as EnemyTier,
     });
@@ -320,7 +599,11 @@ function generateBossWave(wave: number, hpMultiplier: number): Enemy[] {
     id: timeNow,
     name: boss.name,
     hp: bossHp,
+    maxHp: bossHp,
     burnStacks: 0,
+    scorchLevel: 0,
+    jerkLevel: 0,
+    hasPyroclasm: false,
     isDead: false,
     tier: 'boss' as EnemyTier,
   });
@@ -334,12 +617,17 @@ function generateBossWave(wave: number, hpMultiplier: number): Enemy[] {
     const registry =
       tier === 'fodder' ? ENEMY_REGISTRY.fodder : ENEMY_REGISTRY.medium;
     const randomMinion = registry[Math.floor(Math.random() * registry.length)];
+    const hp = Math.round(randomMinion.baseHp * hpMultiplier * 0.8); // Minions are slightly weaker
 
     enemies.push({
       id: timeNow + i + 1,
       name: `${randomMinion.name} Minion`,
-      hp: Math.round(randomMinion.baseHp * hpMultiplier * 0.8), // Minions are slightly weaker
+      hp,
+      maxHp: hp,
       burnStacks: 0,
+      scorchLevel: 0,
+      jerkLevel: 0,
+      hasPyroclasm: false,
       isDead: false,
       tier: tier as EnemyTier,
     });
@@ -397,7 +685,11 @@ export function spawnRandomEnemy(): Enemy {
       randomEnemy.name +
       (tier === 'elite' ? ' (Elite)' : tier === 'boss' ? '' : ''),
     hp: randomHp,
+    maxHp: randomHp,
     burnStacks: 0,
+    scorchLevel: 0,
+    jerkLevel: 0,
+    hasPyroclasm: false,
     isDead: false,
     tier,
   };
@@ -412,7 +704,11 @@ export function createInitialEnemies(): Enemy[] {
       id: 1,
       name: 'Kobold',
       hp: 60,
+      maxHp: 60,
       burnStacks: 0,
+      scorchLevel: 0,
+      jerkLevel: 0,
+      hasPyroclasm: false,
       isDead: false,
       tier: 'fodder',
     },
@@ -420,7 +716,11 @@ export function createInitialEnemies(): Enemy[] {
       id: 2,
       name: 'Goblin',
       hp: 100,
+      maxHp: 100,
       burnStacks: 0,
+      scorchLevel: 0,
+      jerkLevel: 0,
+      hasPyroclasm: false,
       isDead: false,
       tier: 'medium',
     },
@@ -428,7 +728,11 @@ export function createInitialEnemies(): Enemy[] {
       id: 3,
       name: 'Dragon Whelp',
       hp: 200,
+      maxHp: 200,
       burnStacks: 0,
+      scorchLevel: 0,
+      jerkLevel: 0,
+      hasPyroclasm: false,
       isDead: false,
       tier: 'elite',
     },

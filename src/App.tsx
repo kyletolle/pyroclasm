@@ -51,6 +51,11 @@ function App() {
           setLog(prev => [...prev, ...result.deathMessages]);
         }
 
+        // Add effect messages (for derivative system)
+        if (result.effectMessages.length > 0) {
+          setLog(prev => [...prev, ...result.effectMessages]);
+        }
+
         // Clear selection if the selected enemy died
         if (
           selectedEnemy &&
@@ -96,12 +101,17 @@ function App() {
       ) {
         setSelectedEnemy(null);
       }
+    }
 
-      // Check if all enemies are defeated after this attack
-      const allDefeated = areAllEnemiesDefeated(result.updatedEnemies);
-      if (allDefeated && autoSpawnWaves) {
-        handleNextWave();
-      }
+    // Add effect messages from derivative effects
+    if (result.effectMessages && result.effectMessages.length > 0) {
+      setLog(prev => [...prev, ...result.effectMessages]);
+    }
+
+    // Check if all enemies are defeated after this attack
+    const allDefeated = areAllEnemiesDefeated(result.updatedEnemies);
+    if (allDefeated && autoSpawnWaves) {
+      handleNextWave();
     }
 
     // Ensure auto-tick is enabled when an attack is made

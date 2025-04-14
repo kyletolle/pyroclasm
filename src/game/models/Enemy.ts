@@ -6,24 +6,50 @@ export interface Enemy {
   id: number;
   name: string;
   hp: number;
-  burnStacks: number;
+  maxHp: number;
+  burnStacks: number; // 1st derivative - damage over time
+  scorchLevel: number; // 2nd derivative - accelerates burn damage
+  jerkLevel: number; // 3rd derivative - accelerates scorch and causes spread
+  hasPyroclasm: boolean; // 4th derivative - catastrophic effect trigger
   isDead: boolean;
   tier: EnemyTier;
 }
 
 // Factory function to create a new enemy instance
-export function createEnemy(
-  id: number,
-  name: string,
-  hp: number,
-  tier: EnemyTier = 'medium'
-): Enemy {
+export function createEnemy(id: number, tier: EnemyTier = 'fodder'): Enemy {
+  let hp: number;
+  let name: string;
+
+  switch (tier) {
+    case 'boss':
+      hp = 100;
+      name = `Boss ${id}`;
+      break;
+    case 'elite':
+      hp = 50;
+      name = `Elite ${id}`;
+      break;
+    case 'medium':
+      hp = 25;
+      name = `Fighter ${id}`;
+      break;
+    case 'fodder':
+    default:
+      hp = 10;
+      name = `Minion ${id}`;
+      break;
+  }
+
   return {
     id,
     name,
-    hp,
-    burnStacks: 0,
-    isDead: false,
     tier,
+    hp,
+    maxHp: hp,
+    burnStacks: 0,
+    scorchLevel: 0,
+    jerkLevel: 0,
+    hasPyroclasm: false,
+    isDead: false,
   };
 }

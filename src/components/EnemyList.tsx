@@ -19,7 +19,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
       background: '',
       icon: '',
     };
-    
+
     if (enemy.isDead) {
       return {
         ...baseStyles,
@@ -27,7 +27,19 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
         background: isDark ? 'bg-gray-900' : 'bg-gray-100',
       };
     }
-    
+
+    // If enemy has pyroclasm, override with pyroclasm styling
+    if (enemy.hasPyroclasm) {
+      return {
+        ...baseStyles,
+        border: isDark
+          ? 'border-orange-700 border-2'
+          : 'border-orange-500 border-2',
+        background: isDark ? 'bg-red-900 bg-opacity-40' : 'bg-red-100',
+        icon: '🌋',
+      };
+    }
+
     switch (enemy.tier) {
       case 'fodder':
         return {
@@ -53,7 +65,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
       case 'boss':
         return {
           ...baseStyles,
-          border: isDark ? 'border-red-700 border-2' : 'border-red-500 border-2',
+          border: isDark
+            ? 'border-red-700 border-2'
+            : 'border-red-500 border-2',
           background: isDark ? 'bg-red-900 bg-opacity-30' : 'bg-red-50',
           icon: '👑',
         };
@@ -62,13 +76,47 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
     }
   };
 
+  // Get status effect display info
+  const getStatusEffects = (enemy: Enemy) => {
+    const effects = [];
+
+    if (enemy.burnStacks > 0) {
+      effects.push({
+        icon: '🔥',
+        value: enemy.burnStacks,
+        className: isDark ? 'text-orange-400' : 'text-orange-600',
+      });
+    }
+
+    if (enemy.scorchLevel > 0) {
+      effects.push({
+        icon: '🔥🔥',
+        value: enemy.scorchLevel,
+        className: isDark ? 'text-red-400' : 'text-red-600',
+        tooltip: `Scorch Lv${enemy.scorchLevel}: Burn damage increased by ${Math.round((Math.pow(1.5, enemy.scorchLevel) - 1) * 100)}%`,
+      });
+    }
+
+    if (enemy.jerkLevel > 0) {
+      effects.push({
+        icon: '⚡',
+        value: enemy.jerkLevel,
+        className: isDark ? 'text-yellow-400' : 'text-yellow-600',
+        tooltip: `Jerk Lv${enemy.jerkLevel}: Scorch effect amplified by ${Math.pow(2, enemy.jerkLevel)}x and burn spreads to other enemies`,
+      });
+    }
+
+    return effects;
+  };
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-2">Enemies</h2>
       <ul className="space-y-2">
         {enemies.map(enemy => {
           const tierStyles = getTierStyles(enemy);
-          
+          const statusEffects = getStatusEffects(enemy);
+
           return (
             <li
               key={enemy.id}
@@ -84,24 +132,36 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
                   {!enemy.isDead && tierStyles.icon && (
-                    <span className="mr-2" title={`${enemy.tier.charAt(0).toUpperCase() + enemy.tier.slice(1)} enemy`}>
+                    <span
+                      className="mr-2"
+                      title={`${enemy.tier.charAt(0).toUpperCase() + enemy.tier.slice(1)} enemy`}
+                    >
                       {tierStyles.icon}
                     </span>
                   )}
                   <span>
-                    {enemy.name} {enemy.isDead ? (
+                    {enemy.name}{' '}
+                    {enemy.isDead ? (
                       <span className="font-bold">💀 Defeated</span>
                     ) : (
                       <span>(HP: {enemy.hp})</span>
                     )}
                   </span>
                 </div>
-                {enemy.burnStacks > 0 && !enemy.isDead && (
-                  <span
-                    className={`ml-2 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}
-                  >
-                    🔥 {enemy.burnStacks}
-                  </span>
+
+                {/* Status effects display */}
+                {statusEffects.length > 0 && !enemy.isDead && (
+                  <div className="flex gap-2">
+                    {statusEffects.map((effect, idx) => (
+                      <span
+                        key={idx}
+                        className={`ml-2 ${effect.className}`}
+                        title={effect.tooltip}
+                      >
+                        {effect.icon} {effect.value}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             </li>

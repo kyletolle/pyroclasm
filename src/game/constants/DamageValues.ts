@@ -1,24 +1,52 @@
 import { DamageEffect } from '../models/DamageEffect';
 
-// Base damage values for each attack type
+/**
+ * Base damage values for each damage effect
+ */
 export const BASE_DAMAGE: Record<DamageEffect, number> = {
-  fire: 30,
-  burn: 5,
-  scorch: 10,
-  inferno: 20,
-  pyroclasm: 50,
+  fire: 3,
 };
 
-// Configuration for status effects
+/**
+ * Constants for status effects in the derivative damage system
+ */
 export const STATUS_EFFECTS = {
+  // 1st derivative - Damage over time
   burn: {
-    damagePerStack: 3,
+    baseDamagePerStack: 2,
     stacksApplied: {
-      fire: 2,
-      burn: 1,
-      scorch: 1,
-      inferno: 3,
-      pyroclasm: 5,
+      fire: 3,
     },
+    // Chance for burn to proc scorch (per stack)
+    chanceToProc: {
+      scorch: 0.15, // 15% chance per burn stack
+    },
+  },
+
+  // 2nd derivative - Accelerate burn damage
+  scorch: {
+    burnDamageMultiplier: 1.5, // Each level increases burn damage by 50%
+    maxLevel: 5,
+    additionalBurnStacks: 1, // Each scorch level add adds this many burn stacks
+  },
+
+  // 3rd derivative - Accelerate scorch and spread burn
+  jerk: {
+    scorchMultiplier: 2, // Multiplier for scorch effectiveness
+    maxLevel: 3,
+    spreadRadius: 1, // Number of other enemies to potentially spread to
+    burnStacksToSpread: 2, // Number of burn stacks to spread to other enemies
+    // Chance for jerk effects to proc (per scorch level)
+    chanceToProc: {
+      jerk: 0.1, // 10% chance per scorch level
+      pyroclasm: 0.02, // 2% chance per burn stack
+    },
+  },
+
+  // 4th derivative - Catastrophic effect
+  pyroclasm: {
+    burnStacksApplied: 8, // Apply this many burn stacks to all enemies
+    scorchLevelApplied: 2, // Apply this many scorch levels to all enemies
+    jerkLevelApplied: 1, // Apply this many jerk levels to all enemies
   },
 };
