@@ -6,9 +6,17 @@ interface Props {
   enemies: Enemy[];
   selected: Enemy | null;
   onSelect: (e: Enemy) => void;
+  waveCleared?: boolean;
+  currentWave?: number;
 }
 
-export function EnemyList({ enemies, selected, onSelect }: Props) {
+export function EnemyList({
+  enemies,
+  selected,
+  onSelect,
+  waveCleared = false,
+  currentWave = 1,
+}: Props) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const listRef = useRef<HTMLUListElement>(null);
@@ -351,131 +359,162 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
     );
   };
 
+  // Wave cleared placeholder component
+  const WaveClearedPlaceholder = () => {
+    return (
+      <div className="flex flex-col items-center justify-center p-10 border-2 rounded-md border-dashed h-64">
+        <div className={`text-4xl animate-bounce mb-2`}>🏆</div>
+        <h3 className="text-xl font-bold mb-1">Wave {currentWave} Cleared!</h3>
+        <p
+          className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-center`}
+        >
+          All enemies defeated. Prepare for the next wave!
+        </p>
+        <div className="mt-4 flex space-x-3 text-2xl">
+          <span className="animate-pulse">🔥</span>
+          <span className="animate-pulse" style={{ animationDelay: '0.2s' }}>
+            🔥
+          </span>
+          <span className="animate-pulse" style={{ animationDelay: '0.4s' }}>
+            🔥
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold mb-2">Enemies</h2>
-        <button
-          onClick={() => setUsePieChart(!usePieChart)}
-          className={`text-xs py-1 px-2 mb-2 rounded ${
-            isDark
-              ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-              : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
-          }`}
-        >
-          {usePieChart ? 'Use Linear Bar' : 'Use Pie Chart'}
-        </button>
+        {!waveCleared && enemies.length > 0 && (
+          <button
+            onClick={() => setUsePieChart(!usePieChart)}
+            className={`text-xs py-1 px-2 mb-2 rounded ${
+              isDark
+                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
+            }`}
+          >
+            {usePieChart ? 'Use Linear Bar' : 'Use Pie Chart'}
+          </button>
+        )}
       </div>
-      <ul ref={listRef} className="space-y-4">
-        {enemies.map(enemy => {
-          const tierStyles = getTierStyles(enemy);
-          const statusEffects = getStatusEffects(enemy);
-          const isSelected = selected?.id === enemy.id && !enemy.isDead;
 
-          // Style object for the ring pulse animation with color
-          const customRingStyles =
-            isSelected && tierStyles.ringColor
-              ? ({
-                  '--pulse-color': tierStyles.ringColor,
-                } as React.CSSProperties)
-              : {};
+      {waveCleared ? (
+        <WaveClearedPlaceholder />
+      ) : (
+        <ul ref={listRef} className="space-y-4">
+          {enemies.map(enemy => {
+            const tierStyles = getTierStyles(enemy);
+            const statusEffects = getStatusEffects(enemy);
+            const isSelected = selected?.id === enemy.id && !enemy.isDead;
 
-          // Get arrow color based on enemy tier
-          const getArrowColor = () => {
-            if (enemy.hasPyroclasm) return 'text-yellow-400';
+            // Style object for the ring pulse animation with color
+            const customRingStyles =
+              isSelected && tierStyles.ringColor
+                ? ({
+                    '--pulse-color': tierStyles.ringColor,
+                  } as React.CSSProperties)
+                : {};
 
-            switch (enemy.tier) {
-              case 'fodder':
-                return 'text-white';
-              case 'medium':
-                return 'text-blue-300';
-              case 'elite':
-                return isDark ? 'text-purple-300' : 'text-purple-500'; // Brighter purple
-              case 'boss':
-                return 'text-yellow-300';
-              default:
-                return 'text-white';
-            }
-          };
+            // Get arrow color based on enemy tier
+            const getArrowColor = () => {
+              if (enemy.hasPyroclasm) return 'text-yellow-400';
 
-          return (
-            <li
-              key={enemy.id}
-              data-enemy-id={enemy.id}
-              className={`p-3 border-2 rounded-md ${enemy.isDead ? 'cursor-default opacity-70' : 'cursor-pointer'} ${
-                isSelected
-                  ? `ring-2 ring-offset-2 ${isSelected && !enemy.isDead ? 'pulse-ring-custom' : ''}`
-                  : ''
-              } ${
-                isSelected
-                  ? isDark
-                    ? 'bg-red-800 border-red-400 shadow-md shadow-red-900/50'
-                    : 'bg-red-100 border-red-500 shadow-md shadow-red-500/30'
-                  : `${tierStyles.border} ${tierStyles.background} ${tierStyles.extraClasses || ''}`
-              }`}
-              onClick={() => !enemy.isDead && onSelect(enemy)}
-              style={customRingStyles}
-              tabIndex={enemy.isDead ? -1 : 0}
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  {/* Indicator arrow with tier-based color */}
-                  {isSelected && !enemy.isDead && (
-                    <span
-                      className={`${getArrowColor()} mr-2 pulse-arrow font-bold`}
-                    >
-                      ▶
-                    </span>
-                  )}
+              switch (enemy.tier) {
+                case 'fodder':
+                  return 'text-white';
+                case 'medium':
+                  return 'text-blue-300';
+                case 'elite':
+                  return isDark ? 'text-purple-300' : 'text-purple-500'; // Brighter purple
+                case 'boss':
+                  return 'text-yellow-300';
+                default:
+                  return 'text-white';
+              }
+            };
 
-                  {!enemy.isDead && tierStyles.icon && (
-                    <span
-                      className={`mr-2 ${enemy.tier === 'elite' && isDark ? 'text-purple-200' : ''}`}
-                      title={`${enemy.tier.charAt(0).toUpperCase() + enemy.tier.slice(1)} enemy`}
-                    >
-                      {tierStyles.icon}
-                    </span>
-                  )}
-
-                  <span
-                    className={`${enemy.tier === 'elite' && !enemy.isDead && isDark ? 'text-purple-200' : ''}`}
-                  >
-                    {enemy.name}{' '}
-                    {enemy.isDead ? (
-                      <span className="font-bold">💀 Defeated</span>
-                    ) : (
-                      <span></span> // Removed HP text since it's now in the health bar
+            return (
+              <li
+                key={enemy.id}
+                data-enemy-id={enemy.id}
+                className={`p-3 border-2 rounded-md ${enemy.isDead ? 'cursor-default opacity-70' : 'cursor-pointer'} ${
+                  isSelected
+                    ? `ring-2 ring-offset-2 ${isSelected && !enemy.isDead ? 'pulse-ring-custom' : ''}`
+                    : ''
+                } ${
+                  isSelected
+                    ? isDark
+                      ? 'bg-red-800 border-red-400 shadow-md shadow-red-900/50'
+                      : 'bg-red-100 border-red-500 shadow-md shadow-red-500/30'
+                    : `${tierStyles.border} ${tierStyles.background} ${tierStyles.extraClasses || ''}`
+                }`}
+                onClick={() => !enemy.isDead && onSelect(enemy)}
+                style={customRingStyles}
+                tabIndex={enemy.isDead ? -1 : 0}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center">
+                    {/* Indicator arrow with tier-based color */}
+                    {isSelected && !enemy.isDead && (
+                      <span
+                        className={`${getArrowColor()} mr-2 pulse-arrow font-bold`}
+                      >
+                        ▶
+                      </span>
                     )}
-                  </span>
+
+                    {!enemy.isDead && tierStyles.icon && (
+                      <span
+                        className={`mr-2 ${enemy.tier === 'elite' && isDark ? 'text-purple-200' : ''}`}
+                        title={`${enemy.tier.charAt(0).toUpperCase() + enemy.tier.slice(1)} enemy`}
+                      >
+                        {tierStyles.icon}
+                      </span>
+                    )}
+
+                    <span
+                      className={`${enemy.tier === 'elite' && !enemy.isDead && isDark ? 'text-purple-200' : ''}`}
+                    >
+                      {enemy.name}{' '}
+                      {enemy.isDead ? (
+                        <span className="font-bold">💀 Defeated</span>
+                      ) : (
+                        <span></span> // Removed HP text since it's now in the health bar
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Status effects display */}
+                  {statusEffects.length > 0 && !enemy.isDead && (
+                    <div className="flex gap-2">
+                      {statusEffects.map((effect, idx) => (
+                        <span
+                          key={idx}
+                          className={`ml-2 ${effect.className}`}
+                          title={effect.tooltip}
+                        >
+                          {effect.icon} {effect.value}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Status effects display */}
-                {statusEffects.length > 0 && !enemy.isDead && (
-                  <div className="flex gap-2">
-                    {statusEffects.map((effect, idx) => (
-                      <span
-                        key={idx}
-                        className={`ml-2 ${effect.className}`}
-                        title={effect.tooltip}
-                      >
-                        {effect.icon} {effect.value}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Health indicators */}
-              {!enemy.isDead &&
-                (usePieChart ? (
-                  <PieChartHealth enemy={enemy} />
-                ) : (
-                  <LinearHealthBar enemy={enemy} />
-                ))}
-            </li>
-          );
-        })}
-      </ul>
+                {/* Health indicators */}
+                {!enemy.isDead &&
+                  (usePieChart ? (
+                    <PieChartHealth enemy={enemy} />
+                  ) : (
+                    <LinearHealthBar enemy={enemy} />
+                  ))}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

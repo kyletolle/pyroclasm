@@ -26,6 +26,10 @@ function App() {
   const [tickSpeed, setTickSpeed] = useState<number>(1000); // milliseconds
   const [waveNumber, setWaveNumber] = useState<number>(1); // Track the current wave
   const [autoSpawnWaves, setAutoSpawnWaves] = useState<boolean>(true); // Auto-spawn new waves by default
+  const [waveCleared, setWaveCleared] = useState<boolean>(false); // Track if wave cleared placeholder should be shown
+  const [waveClearedTimeout, setWaveClearedTimeout] = useState<number | null>(
+    null
+  ); // For cleanup
   const { theme } = useTheme();
 
   // Function to select enemy with highest health
@@ -52,11 +56,42 @@ function App() {
   // Check if all enemies are defeated
   const allEnemiesDefeated = areAllEnemiesDefeated(enemies);
 
+  // When all enemies are defeated, show the wave cleared placeholder
+  useEffect(() => {
+    if (allEnemiesDefeated && !waveCleared && enemies.length > 0) {
+      setWaveCleared(true);
+
+      // Clear any existing timeout
+      if (waveClearedTimeout !== null) {
+        window.clearTimeout(waveClearedTimeout);
+      }
+
+      // If auto-spawn is enabled, set a timer to spawn the next wave
+      if (autoSpawnWaves) {
+        const timeoutId = window.setTimeout(() => {
+          handleNextWave();
+        }, 3000); // 3 second celebration before next wave
+
+        setWaveClearedTimeout(timeoutId);
+      }
+    }
+  }, [allEnemiesDefeated, enemies]);
+
+  // Clean up the timeout when component unmounts
+  useEffect(() => {
+    return () => {
+      if (waveClearedTimeout !== null) {
+        window.clearTimeout(waveClearedTimeout);
+      }
+    };
+  }, [waveClearedTimeout]);
+
   // Auto-ticker interval effect
   useEffect(() => {
     let intervalId: number | null = null;
 
-    if (autoTickEnabled) {
+    // Don't run the auto-ticker when the wave cleared placeholder is showing
+    if (autoTickEnabled && !waveCleared) {
       intervalId = window.setInterval(() => {
         // Process a turn tick
         const result = skipTurn(enemies);
@@ -88,8 +123,25 @@ function App() {
 
         // Check if all enemies are defeated after this turn
         const allDefeated = areAllEnemiesDefeated(result.updatedEnemies);
-        if (allDefeated && autoSpawnWaves) {
-          handleNextWave();
+        if (allDefeated && !waveCleared) {
+          // Show the victory placeholder and add a log message
+          setWaveCleared(true);
+          setLog(prev => [
+            ...prev,
+            `🏆 Wave ${waveNumber} cleared! Well done!`,
+          ]);
+
+          // If auto-spawn is enabled, set a timer to spawn the next wave
+          if (autoSpawnWaves) {
+            if (waveClearedTimeout !== null) {
+              window.clearTimeout(waveClearedTimeout);
+            }
+            const timeoutId = window.setTimeout(() => {
+              handleNextWave();
+            }, 2000); // 2 second celebration before next wave
+
+            setWaveClearedTimeout(timeoutId);
+          }
         }
       }, tickSpeed);
     }
@@ -100,7 +152,14 @@ function App() {
         clearInterval(intervalId);
       }
     };
-  }, [autoTickEnabled, tickSpeed, enemies, selectedEnemy, autoSpawnWaves]); // Re-run effect when these dependencies change
+  }, [
+    autoTickEnabled,
+    tickSpeed,
+    enemies,
+    selectedEnemy,
+    autoSpawnWaves,
+    waveCleared,
+  ]); // Added waveCleared dependency
 
   const handleAttack = (effect: DamageEffect) => {
     // Use our combat service to handle the attack
@@ -151,12 +210,13 @@ function App() {
     setTickSpeed(speed);
   };
 
-  // Handler for spawning next wave
+  // Modified handleNextWave to reset waveCleared state
   const handleNextWave = () => {
     const { enemies: newEnemies, waveNumber: newWaveNumber } = spawnNextWave();
     setEnemies(newEnemies);
     setWaveNumber(newWaveNumber);
     setLog(prev => [...prev, `Wave ${newWaveNumber} has arrived!`]);
+    setWaveCleared(false);
 
     // Auto-select enemy with highest health in the new wave
     const newSelected = selectHighestHealthEnemy(newEnemies);
@@ -235,6 +295,8 @@ function App() {
           enemies={enemies}
           selected={selectedEnemy}
           onSelect={setSelectedEnemy}
+          waveCleared={waveCleared}
+          currentWave={waveNumber}
         />
 
         <div className="flex flex-col gap-4">
