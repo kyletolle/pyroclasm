@@ -14,9 +14,8 @@
   }
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Use proper Tailwind v4 imports */
+@import "tailwindcss/preflight";
 
 /* Pulse animations */
 @keyframes pulse-ring {
