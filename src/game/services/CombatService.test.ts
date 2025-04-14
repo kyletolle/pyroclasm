@@ -31,7 +31,7 @@ describe('CombatService', () => {
 
         // Assert
         expect(result.updatedEnemies[0].hp).toBe(97); // 100 - 3 damage
-        expect(result.updatedEnemies[0].burnStacks).toBe(3); // Updated to match actual implementation
+        expect(result.updatedEnemies[0].burnStacks).toBe(3); // Should match STATUS_EFFECTS.burn.stacksApplied.fire (3)
         expect(result.message).toContain(
           'Used Fire on Test Enemy for 3 damage'
         );
@@ -55,7 +55,7 @@ describe('CombatService', () => {
         expect(
           result.updatedEnemies[0].hp === initialEnemy.hp - expectedDamage
         ); // 100 - 10 = 90
-        expect(result.updatedEnemies[0].burnStacks).toBe(7); // 10 - 5 + 2 = 7 (original - converted + added by combustion)
+        expect(result.updatedEnemies[0].burnStacks).toBe(5); // 10 / 2 = 5 (remaining after conversion)
         expect(
           result.effectMessages.some(msg => msg.includes('Burn stacks combust'))
         ).toBe(true);
@@ -72,7 +72,7 @@ describe('CombatService', () => {
         // Assert
         expect(result.message).toContain('Combustion converted to Fire attack');
         expect(result.updatedEnemies[0].hp).toBe(97); // 100 - 3 damage from fire
-        expect(result.updatedEnemies[0].burnStacks).toBe(4); // Implementation applies 4 burn stacks in this case
+        expect(result.updatedEnemies[0].burnStacks).toBe(3); // Should match fire attack's burn stacks
       });
 
       it('should apply scorch and inferno multipliers to combustion damage', () => {
