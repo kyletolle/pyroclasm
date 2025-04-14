@@ -359,18 +359,19 @@ export function applyAttack(
     const oldBurnStacks = targetEnemy.burnStacks;
     const newBurnStacks = oldBurnStacks * 2;
 
-    updatedEnemies[targetIndex] = {
+    // Create a new enemy object with doubled burn stacks
+    const updatedEnemy = {
       ...targetEnemy,
       burnStacks: newBurnStacks,
     };
 
+    // Update the enemy in the array
+    updatedEnemies[targetIndex] = updatedEnemy;
+
     effectMessages.push(`🔆 Burn intensifies on ${targetEnemy.name}!`);
 
     // Process derivative effects
-    const afterScorch = processScorchProc(
-      updatedEnemies[targetIndex],
-      effectMessages
-    );
+    const afterScorch = processScorchProc(updatedEnemy, effectMessages);
     updatedEnemies[targetIndex] = afterScorch;
 
     const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
