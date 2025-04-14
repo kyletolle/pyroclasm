@@ -19,24 +19,25 @@ export function AttackPanel({ onAttack }: Props) {
     },
     {
       name: DerivativeType.BURN,
-      description: 'Damage over time effect from fire',
+      description: 'Damage over time effect from fire (velocity)',
       emoji: '🔥',
     },
     {
       name: DerivativeType.SCORCH,
-      description: 'Accelerates burn damage (15% chance per burn stack)',
+      description:
+        'Accelerates burn damage (acceleration - 15% chance per burn stack)',
       emoji: '🔥🔥',
     },
     {
-      name: DerivativeType.JERK,
+      name: DerivativeType.INFERNO,
       description:
-        'Accelerates scorch and spreads burns (10% chance per scorch level)',
+        'Accelerates scorch and spreads burns (inferno - 10% chance per scorch level)',
       emoji: '⚡',
     },
     {
       name: DerivativeType.PYROCLASM,
       description:
-        'Cataclysmic effect that engulfs all enemies (2% chance per burn stack)',
+        'Cataclysmic effect that engulfs all enemies (special case - 2% chance per burn stack)',
       emoji: '🌋',
     },
   ];

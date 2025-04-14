@@ -33,7 +33,7 @@ function checkForDeath(enemy: Enemy): { enemy: Enemy; hasDied: boolean } {
         hp: 0,
         burnStacks: 0,
         scorchLevel: 0,
-        jerkLevel: 0,
+        infernoLevel: 0,
         hasPyroclasm: false,
         isDead: true,
       },
@@ -99,9 +99,10 @@ function processScorchProc(enemy: Enemy, effectMessages: string[]): Enemy {
 }
 
 /**
- * Process jerk proc chance based on scorch level
+ * Process inferno proc chance based on scorch level
+ * (Inferno = 3rd derivative of damage, like jerk in physics)
  */
-function processJerkProc(
+function processInfernoProc(
   enemy: Enemy,
   allEnemies: Enemy[],
   effectMessages: string[]
@@ -110,30 +111,30 @@ function processJerkProc(
     return { updatedTarget: enemy, updatedEnemies: allEnemies };
   }
 
-  const jerkChance = STATUS_EFFECTS.jerk.chanceToProc.jerk;
+  const infernoChance = STATUS_EFFECTS.inferno.chanceToProc.inferno;
   const procCount = Array(enemy.scorchLevel)
     .fill(0)
-    .filter(() => rollProbability(jerkChance)).length;
+    .filter(() => rollProbability(infernoChance)).length;
 
   if (procCount > 0) {
-    const newJerkLevel = Math.min(
-      enemy.jerkLevel + procCount,
-      STATUS_EFFECTS.jerk.maxLevel
+    const newInfernoLevel = Math.min(
+      enemy.infernoLevel + procCount,
+      STATUS_EFFECTS.inferno.maxLevel
     );
-    if (newJerkLevel > enemy.jerkLevel) {
+    if (newInfernoLevel > enemy.infernoLevel) {
       effectMessages.push(
-        `⚡🔥 ${enemy.name} experiences jerk! Scorch accelerates and burn spreads!`
+        `⚡🔥 ${enemy.name} experiences inferno! Scorch accelerates and burn spreads!`
       );
 
       let updatedEnemies = [...allEnemies];
       const targetEnemy = {
         ...enemy,
-        jerkLevel: newJerkLevel,
+        infernoLevel: newInfernoLevel,
       };
 
-      // Spread burn to other enemies when jerk procs
-      const spreadCount = STATUS_EFFECTS.jerk.spreadRadius * procCount;
-      const burnStacksToSpread = STATUS_EFFECTS.jerk.burnStacksToSpread;
+      // Spread burn to other enemies when inferno procs
+      const spreadCount = STATUS_EFFECTS.inferno.spreadRadius * procCount;
+      const burnStacksToSpread = STATUS_EFFECTS.inferno.burnStacksToSpread;
 
       // Try to spread to random enemies
       for (let i = 0; i < spreadCount; i++) {
@@ -175,7 +176,7 @@ function processPyroclasmProc(
   if (enemy.isDead || enemy.burnStacks === 0) return allEnemies;
 
   // Each burn stack has a small chance to trigger pyroclasm
-  const pyroclasmChance = STATUS_EFFECTS.jerk.chanceToProc.pyroclasm;
+  const pyroclasmChance = STATUS_EFFECTS.inferno.chanceToProc.pyroclasm;
   const pyroclasmProc = Array(enemy.burnStacks)
     .fill(0)
     .some(() => rollProbability(pyroclasmChance));
@@ -196,9 +197,9 @@ function processPyroclasmProc(
           e.scorchLevel + STATUS_EFFECTS.pyroclasm.scorchLevelApplied,
           STATUS_EFFECTS.scorch.maxLevel
         ),
-        jerkLevel: Math.min(
-          e.jerkLevel + STATUS_EFFECTS.pyroclasm.jerkLevelApplied,
-          STATUS_EFFECTS.jerk.maxLevel
+        infernoLevel: Math.min(
+          e.infernoLevel + STATUS_EFFECTS.pyroclasm.infernoLevelApplied,
+          STATUS_EFFECTS.inferno.maxLevel
         ),
         hasPyroclasm: true,
       };
@@ -225,13 +226,13 @@ function calculateBurnDamage(enemy: Enemy): number {
     damage *= scorchMultiplier;
   }
 
-  // Apply jerk multiplier if applicable
-  if (enemy.jerkLevel > 0) {
-    const jerkMultiplier = Math.pow(
-      STATUS_EFFECTS.jerk.scorchMultiplier,
-      enemy.jerkLevel
+  // Apply inferno multiplier if applicable
+  if (enemy.infernoLevel > 0) {
+    const infernoMultiplier = Math.pow(
+      STATUS_EFFECTS.inferno.scorchMultiplier,
+      enemy.infernoLevel
     );
-    damage *= jerkMultiplier;
+    damage *= infernoMultiplier;
   }
 
   // Pyroclasm adds an additional flat bonus
@@ -308,15 +309,15 @@ export function applyAttack(
       e.id === attackedEnemy.id ? afterScorch : e
     );
 
-    // Process jerk (3rd derivative)
-    const { updatedTarget: afterJerk, updatedEnemies: afterJerkEnemies } =
-      processJerkProc(afterScorch, updatedEnemies, effectMessages);
+    // Process inferno (3rd derivative)
+    const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
+      processInfernoProc(afterScorch, updatedEnemies, effectMessages);
 
-    updatedEnemies = afterJerkEnemies;
+    updatedEnemies = afterInfernoEnemies;
 
     // Process pyroclasm (4th derivative)
     updatedEnemies = processPyroclasmProc(
-      afterJerk,
+      afterInferno,
       updatedEnemies,
       effectMessages
     );
@@ -394,14 +395,14 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
       e.id === enemy.id ? afterScorch : e
     );
 
-    // Process jerk proc
-    const { updatedEnemies: afterJerkEnemies } = processJerkProc(
+    // Process inferno proc
+    const { updatedEnemies: afterInfernoEnemies } = processInfernoProc(
       afterScorch,
       updatedEnemies,
       effectMessages
     );
 
-    updatedEnemies = afterJerkEnemies;
+    updatedEnemies = afterInfernoEnemies;
 
     // Process pyroclasm
     updatedEnemies = processPyroclasmProc(
@@ -521,7 +522,7 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
       maxHp: hp,
       burnStacks: 0,
       scorchLevel: 0,
-      jerkLevel: 0,
+      infernoLevel: 0,
       hasPyroclasm: false,
       isDead: false,
       tier: 'fodder' as EnemyTier,
@@ -542,7 +543,7 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
       maxHp: hp,
       burnStacks: 0,
       scorchLevel: 0,
-      jerkLevel: 0,
+      infernoLevel: 0,
       hasPyroclasm: false,
       isDead: false,
       tier: 'medium' as EnemyTier,
@@ -563,7 +564,7 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
       maxHp: hp,
       burnStacks: 0,
       scorchLevel: 0,
-      jerkLevel: 0,
+      infernoLevel: 0,
       hasPyroclasm: false,
       isDead: false,
       tier: 'elite' as EnemyTier,
@@ -602,7 +603,7 @@ function generateBossWave(wave: number, hpMultiplier: number): Enemy[] {
     maxHp: bossHp,
     burnStacks: 0,
     scorchLevel: 0,
-    jerkLevel: 0,
+    infernoLevel: 0,
     hasPyroclasm: false,
     isDead: false,
     tier: 'boss' as EnemyTier,
@@ -626,7 +627,7 @@ function generateBossWave(wave: number, hpMultiplier: number): Enemy[] {
       maxHp: hp,
       burnStacks: 0,
       scorchLevel: 0,
-      jerkLevel: 0,
+      infernoLevel: 0,
       hasPyroclasm: false,
       isDead: false,
       tier: tier as EnemyTier,
@@ -688,7 +689,7 @@ export function spawnRandomEnemy(): Enemy {
     maxHp: randomHp,
     burnStacks: 0,
     scorchLevel: 0,
-    jerkLevel: 0,
+    infernoLevel: 0,
     hasPyroclasm: false,
     isDead: false,
     tier,
@@ -707,7 +708,7 @@ export function createInitialEnemies(): Enemy[] {
       maxHp: 60,
       burnStacks: 0,
       scorchLevel: 0,
-      jerkLevel: 0,
+      infernoLevel: 0,
       hasPyroclasm: false,
       isDead: false,
       tier: 'fodder',
@@ -719,7 +720,7 @@ export function createInitialEnemies(): Enemy[] {
       maxHp: 100,
       burnStacks: 0,
       scorchLevel: 0,
-      jerkLevel: 0,
+      infernoLevel: 0,
       hasPyroclasm: false,
       isDead: false,
       tier: 'medium',
@@ -731,7 +732,7 @@ export function createInitialEnemies(): Enemy[] {
       maxHp: 200,
       burnStacks: 0,
       scorchLevel: 0,
-      jerkLevel: 0,
+      infernoLevel: 0,
       hasPyroclasm: false,
       isDead: false,
       tier: 'elite',

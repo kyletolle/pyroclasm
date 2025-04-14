@@ -31,14 +31,14 @@ export const STATUS_EFFECTS = {
   },
 
   // 3rd derivative - Accelerate scorch and spread burn
-  jerk: {
+  inferno: {
     scorchMultiplier: 2, // Multiplier for scorch effectiveness
     maxLevel: 3,
     spreadRadius: 1, // Number of other enemies to potentially spread to
     burnStacksToSpread: 2, // Number of burn stacks to spread to other enemies
-    // Chance for jerk effects to proc (per scorch level)
+    // Chance for inferno effects to proc (per scorch level)
     chanceToProc: {
-      jerk: 0.1, // 10% chance per scorch level
+      inferno: 0.1, // 10% chance per scorch level
       pyroclasm: 0.02, // 2% chance per burn stack
     },
   },
@@ -47,6 +47,6 @@ export const STATUS_EFFECTS = {
   pyroclasm: {
     burnStacksApplied: 8, // Apply this many burn stacks to all enemies
     scorchLevelApplied: 2, // Apply this many scorch levels to all enemies
-    jerkLevelApplied: 1, // Apply this many jerk levels to all enemies
+    infernoLevelApplied: 1, // Apply this many inferno levels to all enemies
   },
 };

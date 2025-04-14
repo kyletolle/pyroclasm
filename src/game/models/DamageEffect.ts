@@ -5,7 +5,7 @@ export enum DerivativeType {
   DIRECT = 'direct', // 0th derivative - immediate damage
   BURN = 'burn', // 1st derivative - damage over time
   SCORCH = 'scorch', // 2nd derivative - accelerates burn damage
-  JERK = 'jerk', // 3rd derivative - accelerates scorch and causes spread
+  INFERNO = 'inferno', // 3rd derivative - accelerates scorch and causes spread
   PYROCLASM = 'pyroclasm', // 4th derivative - catastrophic effect
 }
 

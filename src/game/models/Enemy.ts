@@ -1,16 +1,24 @@
 // Enemy tiers defining their relative strength
 export type EnemyTier = 'fodder' | 'medium' | 'elite' | 'boss';
 
-// Base interface for all enemies in the game
+/**
+ * Enemy interface that represents all monsters in the game
+ *
+ * Status Effect System:
+ * - burnStacks: 1st derivative - direct damage over time
+ * - scorchLevel: 2nd derivative - increases burn damage
+ * - infernoLevel: 3rd derivative (inferno) - accelerates scorch and causes spread
+ * - hasPyroclasm: 4th derivative - catastrophic chain reaction
+ */
 export interface Enemy {
   id: number;
   name: string;
   hp: number;
   maxHp: number;
-  burnStacks: number; // 1st derivative - damage over time
-  scorchLevel: number; // 2nd derivative - accelerates burn damage
-  jerkLevel: number; // 3rd derivative - accelerates scorch and causes spread
-  hasPyroclasm: boolean; // 4th derivative - catastrophic effect trigger
+  burnStacks: number; // 1st derivative - direct damage over time
+  scorchLevel: number; // 2nd derivative - increases burn damage
+  infernoLevel: number; // 3rd derivative (inferno) - accelerates scorch and causes spread
+  hasPyroclasm: boolean; // 4th derivative - catastrophic chain reaction
   isDead: boolean;
   tier: EnemyTier;
 }
@@ -48,7 +56,7 @@ export function createEnemy(id: number, tier: EnemyTier = 'fodder'): Enemy {
     maxHp: hp,
     burnStacks: 0,
     scorchLevel: 0,
-    jerkLevel: 0,
+    infernoLevel: 0,
     hasPyroclasm: false,
     isDead: false,
   };

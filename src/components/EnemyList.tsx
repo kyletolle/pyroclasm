@@ -97,12 +97,12 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
       });
     }
 
-    if (enemy.jerkLevel > 0) {
+    if (enemy.infernoLevel > 0) {
       effects.push({
         icon: '⚡',
-        value: enemy.jerkLevel,
+        value: enemy.infernoLevel,
         className: isDark ? 'text-yellow-400' : 'text-yellow-600',
-        tooltip: `Jerk Lv${enemy.jerkLevel}: Scorch effect amplified by ${Math.pow(2, enemy.jerkLevel)}x and burn spreads to other enemies`,
+        tooltip: `Inferno Lv${enemy.infernoLevel}: Scorch effect amplified by ${Math.pow(2, enemy.infernoLevel)}x and burn spreads to other enemies`,
       });
     }
 
