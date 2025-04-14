@@ -160,7 +160,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
 
     if (enemy.scorchLevel > 0) {
       effects.push({
-        icon: '🔥🔥',
+        icon: '🔆',
         value: enemy.scorchLevel,
         className: isDark ? 'text-red-400' : 'text-red-600',
         tooltip: `Scorch Lv${enemy.scorchLevel}: Burn damage increased by ${Math.round((Math.pow(1.5, enemy.scorchLevel) - 1) * 100)}%`,
