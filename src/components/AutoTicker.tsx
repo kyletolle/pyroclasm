@@ -20,6 +20,8 @@ export function AutoTicker({
 
   // Available tick speed options in milliseconds
   const speedOptions = [
+    { value: 10000, label: '0.1x' },
+    { value: 4000, label: '0.25x' },
     { value: 2000, label: '0.5x' },
     { value: 1000, label: '1x' },
     { value: 500, label: '2x' },
@@ -54,7 +56,7 @@ export function AutoTicker({
 
       <div className="flex items-center gap-2">
         <span className="text-sm">Speed:</span>
-        <div className="flex gap-1">
+        <div className="grid grid-cols-3 gap-1">
           {speedOptions.map(option => (
             <button
               key={option.value}
