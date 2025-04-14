@@ -5,6 +5,8 @@ import { DamageEffect } from '../models/DamageEffect';
  */
 export const BASE_DAMAGE: Record<DamageEffect, number> = {
   fire: 3,
+  fireBolt: 7, // High damage single target
+  flameWave: 2, // Low damage multi-target
 };
 
 /**
@@ -16,6 +18,8 @@ export const STATUS_EFFECTS = {
     baseDamagePerStack: 2,
     stacksApplied: {
       fire: 3,
+      fireBolt: 4, // Medium burn application
+      flameWave: 6, // High burn application
     },
     // Chance for burn to proc scorch (per stack)
     chanceToProc: {

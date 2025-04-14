@@ -2,6 +2,7 @@ import { DamageEffect, DerivativeType } from '../game/models/DamageEffect';
 import { useTheme } from '../context/ThemeContext';
 import { capitalize } from '../utils';
 import { Enemy } from '../game/models/Enemy';
+import { BASE_DAMAGE, STATUS_EFFECTS } from '../game/constants/DamageValues';
 
 interface Props {
   onAttack: (effect: DamageEffect) => void;
@@ -44,24 +45,66 @@ export function AttackPanel({ onAttack, selectedEnemy }: Props) {
     },
   ];
 
+  // Attack types information
+  const attackTypes = [
+    {
+      type: 'fire' as DamageEffect,
+      name: 'Fire',
+      description: 'Balanced attack with medium damage and burn',
+      damage: BASE_DAMAGE.fire,
+      burn: STATUS_EFFECTS.burn.stacksApplied.fire,
+      emoji: '🔥',
+      color: isDark
+        ? 'bg-red-600 hover:bg-red-700'
+        : 'bg-red-500 hover:bg-red-600',
+    },
+    {
+      type: 'fireBolt' as DamageEffect,
+      name: 'Fire Bolt',
+      description: 'High damage single-target attack with medium burn',
+      damage: BASE_DAMAGE.fireBolt,
+      burn: STATUS_EFFECTS.burn.stacksApplied.fireBolt,
+      emoji: '⚡🔥',
+      color: isDark
+        ? 'bg-orange-600 hover:bg-orange-700'
+        : 'bg-orange-500 hover:bg-orange-600',
+    },
+    {
+      type: 'flameWave' as DamageEffect,
+      name: 'Flame Wave',
+      description: 'Hits all enemies with low damage but high burn',
+      damage: BASE_DAMAGE.flameWave,
+      burn: STATUS_EFFECTS.burn.stacksApplied.flameWave,
+      emoji: '〰️🔥',
+      color: isDark
+        ? 'bg-amber-600 hover:bg-amber-700'
+        : 'bg-amber-500 hover:bg-amber-600',
+    },
+  ];
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-2">Attack</h2>
 
       <div className="grid grid-cols-1 gap-2">
-        <button
-          onClick={() => onAttack('fire')}
-          disabled={!selectedEnemy}
-          className={`py-2 px-4 rounded ${
-            isDark
-              ? 'bg-red-600 hover:bg-red-700 text-white'
-              : 'bg-red-500 hover:bg-red-600 text-white'
-          } transition-colors ${
-            !selectedEnemy ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-        >
-          {capitalize('fire')} 🔥
-        </button>
+        {attackTypes.map(attack => (
+          <button
+            key={attack.type}
+            onClick={() => onAttack(attack.type)}
+            disabled={!selectedEnemy && attack.type !== 'flameWave'}
+            className={`py-2 px-4 rounded text-white ${attack.color} transition-colors ${
+              !selectedEnemy && attack.type !== 'flameWave'
+                ? 'opacity-50 cursor-not-allowed'
+                : ''
+            }`}
+            title={`${attack.name}: ${attack.description} (Damage: ${attack.damage}, Burn: ${attack.burn})`}
+          >
+            {attack.name} {attack.emoji}
+            <span className="text-xs ml-1">
+              ({attack.damage} dmg, {attack.burn} burn)
+            </span>
+          </button>
+        ))}
       </div>
 
       {/* Derivative damage info panel */}

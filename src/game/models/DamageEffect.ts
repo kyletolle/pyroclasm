@@ -12,9 +12,13 @@ export enum DerivativeType {
 /**
  * Union type for the available damage effects
  */
-export type DamageEffect = 'fire';
+export type DamageEffect = 'fire' | 'fireBolt' | 'flameWave';
 
 /**
  * Array of all available damage effects
  */
-export const allDamageEffects: DamageEffect[] = ['fire'];
+export const allDamageEffects: DamageEffect[] = [
+  'fire',
+  'fireBolt',
+  'flameWave',
+];

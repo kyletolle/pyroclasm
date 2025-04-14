@@ -277,7 +277,73 @@ export function applyAttack(
   const deathMessages: string[] = [];
   const effectMessages: string[] = [];
 
-  // Apply direct damage and burn stacks
+  // Handle special case for Flame Wave (multi-target attack)
+  if (effect === 'flameWave') {
+    let updatedEnemies = [...enemies];
+    const livingEnemies = enemies.filter(e => !e.isDead);
+    const affectedEnemyNames: string[] = [];
+
+    // Apply damage and burn to all living enemies
+    livingEnemies.forEach(enemy => {
+      const enemyIndex = updatedEnemies.findIndex(e => e.id === enemy.id);
+      if (enemyIndex !== -1) {
+        // Apply damage
+        const damagedEnemy = {
+          ...enemy,
+          hp: Math.max(0, enemy.hp - damage),
+          burnStacks: enemy.burnStacks + burnStacksToAdd,
+        };
+
+        // Check if enemy died from this attack
+        const { enemy: afterDeathCheck, hasDied } = checkForDeath(damagedEnemy);
+
+        if (hasDied) {
+          deathMessages.push(`${enemy.name} has been defeated! 💀`);
+        }
+
+        updatedEnemies[enemyIndex] = afterDeathCheck;
+        affectedEnemyNames.push(enemy.name);
+      }
+    });
+
+    // Process derivative effects for all living enemies
+    for (const enemy of updatedEnemies.filter(e => !e.isDead)) {
+      // Process scorch (2nd derivative)
+      const afterScorch = processScorchProc(enemy, effectMessages);
+
+      // Update enemy in array
+      updatedEnemies = updatedEnemies.map(e =>
+        e.id === enemy.id ? afterScorch : e
+      );
+
+      // Process inferno (3rd derivative)
+      const {
+        updatedTarget: afterInferno,
+        updatedEnemies: afterInfernoEnemies,
+      } = processInfernoProc(afterScorch, updatedEnemies, effectMessages);
+
+      updatedEnemies = afterInfernoEnemies;
+
+      // Process pyroclasm (special case)
+      updatedEnemies = processPyroclasmProc(
+        afterInferno,
+        updatedEnemies,
+        effectMessages
+      );
+    }
+
+    // Construct result message
+    const message = `Used Flame Wave, hitting ${livingEnemies.length} enemies for ${damage} damage each and applying ${burnStacksToAdd} burn stacks.`;
+
+    return {
+      updatedEnemies,
+      message,
+      deathMessages,
+      effectMessages,
+    };
+  }
+
+  // For single target attacks (fire and fireBolt)
   let updatedEnemies = enemies.map(enemy => {
     if (enemy.id === targetEnemy.id) {
       // Apply damage
