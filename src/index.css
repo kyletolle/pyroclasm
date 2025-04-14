@@ -1,6 +1,5 @@
 /* Import Tailwind v4 properly */
 @import 'tailwindcss';
-@import 'tailwindcss/preflight';
 
 /* Restore base styles that were previously applied by Tailwind */
 :root {
