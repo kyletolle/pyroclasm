@@ -7,6 +7,9 @@ export const BASE_DAMAGE: Record<DamageEffect, number> = {
   fire: 3,
   fireBolt: 7, // High damage single target
   flameWave: 2, // Low damage multi-target
+  emberSpark: 1, // Minimal damage, high burn
+  heatIntensify: 0, // No direct damage, doubles burn stacks
+  combustion: 0, // Special: converts burn stacks to direct damage
 };
 
 /**
@@ -20,6 +23,9 @@ export const STATUS_EFFECTS = {
       fire: 3,
       fireBolt: 4, // Medium burn application
       flameWave: 6, // High burn application
+      emberSpark: 9,
+      heatIntensify: 0, // Special effect handled in CombatService
+      combustion: 0, // Special effect handled in CombatService
     },
     // Chance for burn to proc scorch (per stack)
     chanceToProc: {

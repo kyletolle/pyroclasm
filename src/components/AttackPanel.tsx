@@ -80,29 +80,73 @@ export function AttackPanel({ onAttack, selectedEnemy }: Props) {
         ? 'bg-amber-600 hover:bg-amber-700'
         : 'bg-amber-500 hover:bg-amber-600',
     },
+    {
+      type: 'emberSpark' as DamageEffect,
+      name: 'Ember Spark',
+      description: 'Minimal damage but very high burn stacks',
+      damage: BASE_DAMAGE.emberSpark,
+      burn: STATUS_EFFECTS.burn.stacksApplied.emberSpark,
+      emoji: '✨🔥',
+      color: isDark
+        ? 'bg-yellow-600 hover:bg-yellow-700'
+        : 'bg-yellow-500 hover:bg-yellow-600',
+    },
+    {
+      type: 'heatIntensify' as DamageEffect,
+      name: 'Heat Intensify',
+      description: 'Doubles the burn stacks on a target',
+      damage: BASE_DAMAGE.heatIntensify,
+      burn: 'x2',
+      emoji: '🔆',
+      color: isDark
+        ? 'bg-red-700 hover:bg-red-800'
+        : 'bg-red-600 hover:bg-red-700',
+    },
+    {
+      type: 'combustion' as DamageEffect,
+      name: 'Combustion',
+      description: 'Converts half of burn stacks to immediate damage',
+      damage: '?',
+      burn: '÷2',
+      emoji: '💥',
+      color: isDark
+        ? 'bg-purple-600 hover:bg-purple-700'
+        : 'bg-purple-500 hover:bg-purple-600',
+    },
   ];
 
   return (
     <div>
       <h2 className="text-xl font-bold mb-2">Attack</h2>
 
-      <div className="grid grid-cols-1 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {attackTypes.map(attack => (
           <button
             key={attack.type}
             onClick={() => onAttack(attack.type)}
-            disabled={!selectedEnemy && attack.type !== 'flameWave'}
-            className={`py-2 px-4 rounded text-white ${attack.color} transition-colors ${
+            disabled={
+              !selectedEnemy && attack.type !== 'flameWave'
+            }
+            className={`py-2 px-3 rounded text-white ${attack.color} transition-colors ${
               !selectedEnemy && attack.type !== 'flameWave'
                 ? 'opacity-50 cursor-not-allowed'
                 : ''
             }`}
-            title={`${attack.name}: ${attack.description} (Damage: ${attack.damage}, Burn: ${attack.burn})`}
+            title={`${attack.name}: ${attack.description}`}
           >
-            {attack.name} {attack.emoji}
-            <span className="text-xs ml-1">
-              ({attack.damage} dmg, {attack.burn} burn)
-            </span>
+            <div className="flex flex-col items-center">
+              <span>{attack.name} {attack.emoji}</span>
+              <span className="text-xs">
+                {typeof attack.damage === 'number' ? 
+                  `${attack.damage} dmg` : 
+                  attack.damage
+                }, 
+                {typeof attack.burn === 'number' ? 
+                  `${attack.burn} burn` : 
+                  attack.burn
+                }
+              </span>
+            </div>
           </button>
         ))}
       </div>

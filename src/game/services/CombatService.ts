@@ -277,8 +277,9 @@ export function applyAttack(
   const deathMessages: string[] = [];
   const effectMessages: string[] = [];
 
-  // Handle special case for Flame Wave (multi-target attack)
+  // Handle special cases for attacks with unique effects
   if (effect === 'flameWave') {
+    // ...existing flameWave code...
     let updatedEnemies = [...enemies];
     const livingEnemies = enemies.filter(e => !e.isDead);
     const affectedEnemyNames: string[] = [];
@@ -341,9 +342,120 @@ export function applyAttack(
       deathMessages,
       effectMessages,
     };
+  } else if (effect === 'heatIntensify') {
+    // Special case for Heat Intensify - double burn stacks on target
+    let updatedEnemies = [...enemies];
+    const targetIndex = updatedEnemies.findIndex(e => e.id === targetEnemy.id);
+
+    if (targetEnemy.burnStacks === 0) {
+      return {
+        updatedEnemies,
+        message: `Heat Intensify had no effect on ${targetEnemy.name} - no burn stacks to intensify!`,
+        deathMessages: [],
+        effectMessages: [],
+      };
+    }
+
+    const oldBurnStacks = targetEnemy.burnStacks;
+    const newBurnStacks = oldBurnStacks * 2;
+
+    updatedEnemies[targetIndex] = {
+      ...targetEnemy,
+      burnStacks: newBurnStacks,
+    };
+
+    effectMessages.push(`🔆 Burn intensifies on ${targetEnemy.name}!`);
+
+    // Process derivative effects
+    const afterScorch = processScorchProc(
+      updatedEnemies[targetIndex],
+      effectMessages
+    );
+    updatedEnemies[targetIndex] = afterScorch;
+
+    const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
+      processInfernoProc(afterScorch, updatedEnemies, effectMessages);
+
+    updatedEnemies = afterInfernoEnemies;
+
+    updatedEnemies = processPyroclasmProc(
+      afterInferno,
+      updatedEnemies,
+      effectMessages
+    );
+
+    return {
+      updatedEnemies,
+      message: `Used Heat Intensify on ${targetEnemy.name}, doubling burn stacks from ${oldBurnStacks} to ${newBurnStacks}!`,
+      deathMessages,
+      effectMessages,
+    };
+  } else if (effect === 'combustion') {
+    // Special case for Combustion - converts half of burn stacks to immediate damage
+    let updatedEnemies = [...enemies];
+    const targetIndex = updatedEnemies.findIndex(e => e.id === targetEnemy.id);
+
+    if (targetEnemy.burnStacks === 0) {
+      return {
+        updatedEnemies,
+        message: `Combustion had no effect on ${targetEnemy.name} - no burn stacks to combust!`,
+        deathMessages: [],
+        effectMessages: [],
+      };
+    }
+
+    const burnStacksToConvert = Math.floor(targetEnemy.burnStacks / 2);
+    const remainingBurnStacks = targetEnemy.burnStacks - burnStacksToConvert;
+    const combustionDamage =
+      burnStacksToConvert * STATUS_EFFECTS.burn.baseDamagePerStack;
+
+    let updatedEnemy = {
+      ...targetEnemy,
+      burnStacks: remainingBurnStacks,
+      hp: Math.max(0, targetEnemy.hp - combustionDamage),
+    };
+
+    effectMessages.push(`💥 Burn stacks combust on ${targetEnemy.name}!`);
+
+    // Check if enemy died from combustion damage
+    const { enemy: afterDeathCheck, hasDied } = checkForDeath(updatedEnemy);
+
+    if (hasDied) {
+      deathMessages.push(
+        `${targetEnemy.name} has been burned to death by Combustion! 💀🔥`
+      );
+    }
+
+    updatedEnemies[targetIndex] = afterDeathCheck;
+
+    // Only process derivative effects if enemy is still alive
+    if (!afterDeathCheck.isDead) {
+      const afterScorch = processScorchProc(afterDeathCheck, effectMessages);
+      updatedEnemies[targetIndex] = afterScorch;
+
+      const {
+        updatedTarget: afterInferno,
+        updatedEnemies: afterInfernoEnemies,
+      } = processInfernoProc(afterScorch, updatedEnemies, effectMessages);
+
+      updatedEnemies = afterInfernoEnemies;
+
+      updatedEnemies = processPyroclasmProc(
+        afterInferno,
+        updatedEnemies,
+        effectMessages
+      );
+    }
+
+    return {
+      updatedEnemies,
+      message: `Used Combustion on ${targetEnemy.name}, converting ${burnStacksToConvert} burn stacks to ${combustionDamage} immediate damage!`,
+      deathMessages,
+      effectMessages,
+    };
   }
 
-  // For single target attacks (fire and fireBolt)
+  // For single target attacks (fire, fireBolt, emberSpark)
   let updatedEnemies = enemies.map(enemy => {
     if (enemy.id === targetEnemy.id) {
       // Apply damage
