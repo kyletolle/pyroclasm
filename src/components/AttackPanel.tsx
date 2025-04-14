@@ -1,12 +1,14 @@
 import { DamageEffect, DerivativeType } from '../game/models/DamageEffect';
 import { useTheme } from '../context/ThemeContext';
 import { capitalize } from '../utils';
+import { Enemy } from '../game/models/Enemy';
 
 interface Props {
   onAttack: (effect: DamageEffect) => void;
+  selectedEnemy: Enemy | null;
 }
 
-export function AttackPanel({ onAttack }: Props) {
+export function AttackPanel({ onAttack, selectedEnemy }: Props) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -49,11 +51,14 @@ export function AttackPanel({ onAttack }: Props) {
       <div className="grid grid-cols-1 gap-2">
         <button
           onClick={() => onAttack('fire')}
+          disabled={!selectedEnemy}
           className={`py-2 px-4 rounded ${
             isDark
               ? 'bg-red-600 hover:bg-red-700 text-white'
               : 'bg-red-500 hover:bg-red-600 text-white'
-          } transition-colors`}
+          } transition-colors ${
+            !selectedEnemy ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
           {capitalize('fire')} 🔥
         </button>

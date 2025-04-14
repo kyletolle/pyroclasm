@@ -28,6 +28,27 @@ function App() {
   const [autoSpawnWaves, setAutoSpawnWaves] = useState<boolean>(true); // Auto-spawn new waves by default
   const { theme } = useTheme();
 
+  // Function to select enemy with highest health
+  const selectHighestHealthEnemy = (enemyList: Enemy[]) => {
+    const livingEnemies = enemyList.filter(e => !e.isDead);
+    if (livingEnemies.length === 0) return null;
+
+    // Find the enemy with the highest HP
+    const highestHealthEnemy = livingEnemies.reduce(
+      (highest, enemy) => (enemy.hp > highest.hp ? enemy : highest),
+      livingEnemies[0]
+    );
+
+    return highestHealthEnemy;
+  };
+
+  // Auto-select highest health enemy on initial load
+  useEffect(() => {
+    if (!selectedEnemy) {
+      setSelectedEnemy(selectHighestHealthEnemy(enemies));
+    }
+  }, []); // Only run once on initial load
+
   // Check if all enemies are defeated
   const allEnemiesDefeated = areAllEnemiesDefeated(enemies);
 
@@ -56,12 +77,13 @@ function App() {
           setLog(prev => [...prev, ...result.effectMessages]);
         }
 
-        // Clear selection if the selected enemy died
+        // Auto-select another enemy if the selected enemy died
         if (
           selectedEnemy &&
           result.updatedEnemies.find(e => e.id === selectedEnemy.id)?.isDead
         ) {
-          setSelectedEnemy(null);
+          const newSelected = selectHighestHealthEnemy(result.updatedEnemies);
+          setSelectedEnemy(newSelected);
         }
 
         // Check if all enemies are defeated after this turn
@@ -94,12 +116,13 @@ function App() {
     if (result.deathMessages.length > 0) {
       setLog(prev => [...prev, ...result.deathMessages]);
 
-      // Clear selection if the selected enemy died
+      // Auto-select another enemy if the selected enemy died
       if (
         selectedEnemy &&
         result.updatedEnemies.find(e => e.id === selectedEnemy.id)?.isDead
       ) {
-        setSelectedEnemy(null);
+        const newSelected = selectHighestHealthEnemy(result.updatedEnemies);
+        setSelectedEnemy(newSelected);
       }
     }
 
@@ -134,13 +157,23 @@ function App() {
     setEnemies(newEnemies);
     setWaveNumber(newWaveNumber);
     setLog(prev => [...prev, `Wave ${newWaveNumber} has arrived!`]);
+
+    // Auto-select enemy with highest health in the new wave
+    const newSelected = selectHighestHealthEnemy(newEnemies);
+    setSelectedEnemy(newSelected);
   };
 
   // Handler for manually adding a single random enemy
   const handleAddEnemy = () => {
     const newEnemy = spawnRandomEnemy();
-    setEnemies(prev => [...prev, newEnemy]);
+    const updatedEnemies = [...enemies, newEnemy];
+    setEnemies(updatedEnemies);
     setLog(prev => [...prev, `A ${newEnemy.name} has appeared!`]);
+
+    // If no enemy is currently selected, select the newly spawned one
+    if (!selectedEnemy) {
+      setSelectedEnemy(newEnemy);
+    }
   };
 
   // Handler for toggling auto-spawn waves setting
@@ -165,7 +198,7 @@ function App() {
         />
 
         <div className="flex flex-col gap-4">
-          <AttackPanel onAttack={handleAttack} />
+          <AttackPanel onAttack={handleAttack} selectedEnemy={selectedEnemy} />
 
           <div className="mt-2">
             <WaveControls
