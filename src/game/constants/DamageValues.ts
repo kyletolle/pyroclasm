@@ -41,7 +41,7 @@ export const STATUS_EFFECTS = {
     // Chance for inferno effects to proc (per scorch level)
     chanceToProc: {
       inferno: 0.1, // 10% chance per scorch level
-      pyroclasm: 0.02, // 2% chance per burn stack (dramatically increased from 0.005%)
+      pyroclasm: 0.005, // 0.5% chance per burn stack (dramatically increased from 0.005%)
     },
   },
 

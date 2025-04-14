@@ -39,7 +39,7 @@ export function AttackPanel({ onAttack, selectedEnemy }: Props) {
     {
       name: DerivativeType.PYROCLASM,
       description:
-        'Cataclysmic effect that engulfs all enemies (special case - 2% chance per burn stack)',
+        'Cataclysmic effect that engulfs all enemies (special case - 0.5% chance per burn stack)',
       emoji: '🌋',
     },
   ];
