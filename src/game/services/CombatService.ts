@@ -347,37 +347,97 @@ export function applyAttack(
     let updatedEnemies = [...enemies];
     const targetIndex = updatedEnemies.findIndex(e => e.id === targetEnemy.id);
 
-    if (targetEnemy.burnStacks === 0) {
+    // Make sure we're working with the most current version of the target enemy
+    const currentTargetEnemy = updatedEnemies[targetIndex];
+
+    // Log the enemy's current burn stacks for debugging
+    console.log(
+      `Heat Intensify on ${currentTargetEnemy.name} with burn stacks: ${currentTargetEnemy.burnStacks}`
+    );
+
+    if (currentTargetEnemy.burnStacks <= 0) {
+      // Try using a basic fire attack instead to apply burn stacks
+      const fireAttack: DamageEffect = 'fire';
+      const damage = BASE_DAMAGE[fireAttack];
+      const burnStacksToAdd =
+        STATUS_EFFECTS.burn.stacksApplied[fireAttack] || 0;
+
+      // Apply damage and burn stacks
+      const updatedEnemy = {
+        ...currentTargetEnemy,
+        hp: Math.max(0, currentTargetEnemy.hp - damage),
+        burnStacks: currentTargetEnemy.burnStacks + burnStacksToAdd,
+      };
+
+      updatedEnemies[targetIndex] = updatedEnemy;
+
+      // Process derivative effects
+      const afterScorch = processScorchProc(updatedEnemy, effectMessages);
+      updatedEnemies[targetIndex] = afterScorch;
+
+      const {
+        updatedTarget: afterInferno,
+        updatedEnemies: afterInfernoEnemies,
+      } = processInfernoProc(afterScorch, updatedEnemies, effectMessages);
+
+      updatedEnemies = afterInfernoEnemies.map(e =>
+        e.id === afterInferno.id ? afterInferno : e
+      );
+
+      updatedEnemies = processPyroclasmProc(
+        afterInferno,
+        updatedEnemies,
+        effectMessages
+      );
+
       return {
         updatedEnemies,
-        message: `Heat Intensify had no effect on ${targetEnemy.name} - no burn stacks to intensify!`,
-        deathMessages: [],
-        effectMessages: [],
+        message: `Heat Intensify converted to Fire attack on ${targetEnemy.name} for ${damage} damage and ${burnStacksToAdd} burn stacks!`,
+        deathMessages,
+        effectMessages,
       };
     }
 
-    const oldBurnStacks = targetEnemy.burnStacks;
+    const oldBurnStacks = currentTargetEnemy.burnStacks;
     const newBurnStacks = oldBurnStacks * 2;
 
-    // Create a new enemy object with doubled burn stacks
+    // Create a copy to avoid reference issues
     const updatedEnemy = {
-      ...targetEnemy,
+      ...currentTargetEnemy,
       burnStacks: newBurnStacks,
     };
 
     // Update the enemy in the array
     updatedEnemies[targetIndex] = updatedEnemy;
 
-    effectMessages.push(`🔆 Burn intensifies on ${targetEnemy.name}!`);
+    effectMessages.push(
+      `🔆 Burn intensifies on ${targetEnemy.name}! Burn stacks doubled from ${oldBurnStacks} to ${newBurnStacks}.`
+    );
 
-    // Process derivative effects
-    const afterScorch = processScorchProc(updatedEnemy, effectMessages);
+    // Process derivative effects (but ensure burn stacks remain at least doubled)
+    const afterScorch = processScorchProc(
+      updatedEnemies[targetIndex],
+      effectMessages
+    );
+
+    // Make sure burn stacks don't go below the doubled value due to processing
+    if (afterScorch.burnStacks < newBurnStacks) {
+      afterScorch.burnStacks = newBurnStacks;
+    }
+
     updatedEnemies[targetIndex] = afterScorch;
 
     const { updatedTarget: afterInferno, updatedEnemies: afterInfernoEnemies } =
       processInfernoProc(afterScorch, updatedEnemies, effectMessages);
 
-    updatedEnemies = afterInfernoEnemies;
+    // Make sure burn stacks don't go below the doubled value
+    if (afterInferno.burnStacks < newBurnStacks) {
+      afterInferno.burnStacks = newBurnStacks;
+    }
+
+    updatedEnemies = afterInfernoEnemies.map(e =>
+      e.id === afterInferno.id ? afterInferno : e
+    );
 
     updatedEnemies = processPyroclasmProc(
       afterInferno,
