@@ -29,7 +29,7 @@ export function AttackPanel({ onAttack, selectedEnemy }: Props) {
       name: DerivativeType.SCORCH,
       description:
         'Accelerates burn damage (acceleration - 15% chance per burn stack)',
-      emoji: '🔥🔥',
+      emoji: '🔆',
     },
     {
       name: DerivativeType.INFERNO,
