@@ -166,6 +166,10 @@ describe('CombatService', () => {
 
         // Act
         const result = applyAttack(enemies, initialEnemy, 'heatIntensify');
+        console.log(
+          'Heat Intensify burn stacks:',
+          result.updatedEnemies[0].burnStacks
+        );
 
         // Assert
         // Burn stacks should be at least doubled (10) and may include additional stacks from random effects
@@ -183,6 +187,14 @@ describe('CombatService', () => {
 
         // Act
         const result = applyAttack(enemies, enemy1, 'flameWave');
+        console.log(
+          'FlameWave enemy1 burn stacks:',
+          result.updatedEnemies[0].burnStacks
+        );
+        console.log(
+          'FlameWave enemy2 burn stacks:',
+          result.updatedEnemies[1].burnStacks
+        );
 
         // Assert
         expect(result.updatedEnemies[0].hp).toBe(98); // 100 - 2 damage
@@ -202,6 +214,7 @@ describe('CombatService', () => {
 
       // Act
       const result = skipTurn(enemies);
+      console.log('SkipTurn burn stacks:', result.updatedEnemies[0].burnStacks);
 
       // Assert
       const expectedDamage = 5 * STATUS_EFFECTS.burn.baseDamagePerStack; // 5 * 2 = 10
