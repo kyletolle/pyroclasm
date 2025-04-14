@@ -183,9 +183,9 @@ function App() {
 
   return (
     <div
-      className={`w-full min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
+      className={`w-full min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'} flex justify-center`}
     >
-      <div className="p-6 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="p-6 max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex justify-between items-center col-span-1 md:col-span-2">
           <h1 className="text-2xl font-bold">Pyroclasm</h1>
           <ThemeToggle />
