@@ -167,6 +167,7 @@ function processInfernoProc(
 
 /**
  * Process pyroclasm proc chance
+ * (Pyroclasm is a special case effect, not strictly a 4th derivative)
  */
 function processPyroclasmProc(
   enemy: Enemy,
@@ -315,7 +316,7 @@ export function applyAttack(
 
     updatedEnemies = afterInfernoEnemies;
 
-    // Process pyroclasm (4th derivative)
+    // Process pyroclasm (special case)
     updatedEnemies = processPyroclasmProc(
       afterInferno,
       updatedEnemies,
