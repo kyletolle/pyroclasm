@@ -290,13 +290,6 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
             className={`h-full ${needsAnimation ? 'animate-health-change' : 'health-bar-fill'}`}
             style={barStyle}
           ></div>
-
-          {/* For small health changes, show numbers directly on the bar */}
-          {healthPercentage < 15 && (
-            <div className="absolute top-0 left-1 text-[10px] text-white font-bold shadow-sm">
-              {enemy.hp}
-            </div>
-          )}
         </div>
       </div>
     );
