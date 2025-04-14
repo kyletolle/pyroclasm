@@ -193,6 +193,19 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                   '--pulse-color': tierStyles.ringColor,
                 } as React.CSSProperties)
               : {};
+              
+          // Get arrow color based on enemy tier
+          const getArrowColor = () => {
+            if (enemy.hasPyroclasm) return 'text-yellow-400';
+            
+            switch (enemy.tier) {
+              case 'fodder': return 'text-white';
+              case 'medium': return 'text-blue-300';
+              case 'elite': return 'text-purple-300';
+              case 'boss': return 'text-yellow-300';
+              default: return 'text-white';
+            }
+          };
 
           return (
             <li
@@ -205,8 +218,8 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
               } ${
                 isSelected
                   ? isDark
-                    ? 'bg-red-900 border-red-500'
-                    : 'bg-red-200 border-red-500'
+                    ? 'bg-red-800 border-red-400 shadow-md shadow-red-900/50'
+                    : 'bg-red-100 border-red-500 shadow-md shadow-red-500/30'
                   : `${tierStyles.border} ${tierStyles.background}`
               }`}
               onClick={() => !enemy.isDead && onSelect(enemy)}
@@ -215,9 +228,9 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
-                  {/* Indicator arrow moved to the front with pulse animation */}
+                  {/* Indicator arrow with tier-based color */}
                   {isSelected && !enemy.isDead && (
-                    <span className="text-green-500 mr-2 pulse-arrow">▶</span>
+                    <span className={`${getArrowColor()} mr-2 pulse-arrow font-bold`}>▶</span>
                   )}
 
                   {!enemy.isDead && tierStyles.icon && (
