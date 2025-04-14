@@ -64,7 +64,8 @@
 
 /* Custom color ring pulse */
 .pulse-ring-custom {
-  animation: pulse-ring-custom 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+  animation: pulse-ring-custom 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955)
+    infinite;
 }
 
 .pulse-arrow {
