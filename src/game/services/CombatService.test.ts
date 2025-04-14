@@ -45,16 +45,9 @@ describe('CombatService', () => {
         // Act
         const result = applyAttack(enemies, initialEnemy, 'fire');
 
-        // Log the exact values for our seeded random implementation
-        console.log(
-          'Fire attack burn stacks:',
-          result.updatedEnemies[0].burnStacks
-        );
-
         // Assert
         expect(result.updatedEnemies[0].hp).toBe(97); // 100 - 3 damage
-        // Don't strictly test the burn stacks value as it may vary due to randomness
-        expect(result.updatedEnemies[0].burnStacks).toBeGreaterThanOrEqual(3);
+        expect(result.updatedEnemies[0].burnStacks).toBe(3); // With seed 1234, always generates 3 burn stacks
         expect(result.message).toContain(
           'Used Fire on Test Enemy for 3 damage'
         );
@@ -69,10 +62,6 @@ describe('CombatService', () => {
 
         // Act
         const result = applyAttack(enemies, initialEnemy, 'combustion');
-        console.log(
-          'Combustion attack burn stacks:',
-          result.updatedEnemies[0].burnStacks
-        );
 
         // Assert
         const burnStacksConverted = Math.floor(initialEnemy.burnStacks / 2); // 5
@@ -82,8 +71,7 @@ describe('CombatService', () => {
         expect(
           result.updatedEnemies[0].hp === initialEnemy.hp - expectedDamage
         ); // 100 - 10 = 90
-        // Don't strictly test the burn stacks value as it may vary due to randomness
-        expect(result.updatedEnemies[0].burnStacks).toBeGreaterThanOrEqual(5);
+        expect(result.updatedEnemies[0].burnStacks).toBe(5); // With seed 1234, always 5 burn stacks
         expect(
           result.effectMessages.some(msg => msg.includes('Burn stacks combust'))
         ).toBe(true);
@@ -96,15 +84,11 @@ describe('CombatService', () => {
 
         // Act
         const result = applyAttack(enemies, initialEnemy, 'combustion');
-        console.log(
-          'Combustion (no burn stacks) burn stacks:',
-          result.updatedEnemies[0].burnStacks
-        );
 
         // Assert
         expect(result.message).toContain('Combustion converted to Fire attack');
         expect(result.updatedEnemies[0].hp).toBe(97); // 100 - 3 damage from fire
-        expect(result.updatedEnemies[0].burnStacks).toBeGreaterThanOrEqual(3); // May have additional burn stacks from random effects
+        expect(result.updatedEnemies[0].burnStacks).toBe(3); // With seed 1234, always 3 burn stacks
       });
 
       it('should apply scorch and inferno multipliers to combustion damage', () => {
@@ -166,14 +150,9 @@ describe('CombatService', () => {
 
         // Act
         const result = applyAttack(enemies, initialEnemy, 'heatIntensify');
-        console.log(
-          'Heat Intensify burn stacks:',
-          result.updatedEnemies[0].burnStacks
-        );
 
         // Assert
-        // Burn stacks should be at least doubled (10) and may include additional stacks from random effects
-        expect(result.updatedEnemies[0].burnStacks).toBeGreaterThanOrEqual(10);
+        expect(result.updatedEnemies[0].burnStacks).toBe(10); // With seed 1234, always produces 10 burn stacks
         expect(result.message).toContain('doubling burn stacks');
       });
     });
@@ -187,21 +166,12 @@ describe('CombatService', () => {
 
         // Act
         const result = applyAttack(enemies, enemy1, 'flameWave');
-        console.log(
-          'FlameWave enemy1 burn stacks:',
-          result.updatedEnemies[0].burnStacks
-        );
-        console.log(
-          'FlameWave enemy2 burn stacks:',
-          result.updatedEnemies[1].burnStacks
-        );
 
         // Assert
         expect(result.updatedEnemies[0].hp).toBe(98); // 100 - 2 damage
         expect(result.updatedEnemies[1].hp).toBe(98); // 100 - 2 damage
-        // Don't strictly test burn stacks as they can vary due to random effects
-        expect(result.updatedEnemies[0].burnStacks).toBeGreaterThanOrEqual(6);
-        expect(result.updatedEnemies[1].burnStacks).toBeGreaterThanOrEqual(6);
+        expect(result.updatedEnemies[0].burnStacks).toBe(6); // With seed 1234, enemy1 gets 6 burn stacks
+        expect(result.updatedEnemies[1].burnStacks).toBe(8); // With seed 1234, enemy2 gets 8 burn stacks
       });
     });
   });
@@ -214,14 +184,12 @@ describe('CombatService', () => {
 
       // Act
       const result = skipTurn(enemies);
-      console.log('SkipTurn burn stacks:', result.updatedEnemies[0].burnStacks);
 
       // Assert
       const expectedDamage = 5 * STATUS_EFFECTS.burn.baseDamagePerStack; // 5 * 2 = 10
 
       expect(result.updatedEnemies[0].hp).toBe(enemy.hp - expectedDamage); // 100 - 10 = 90
-      // Burn stacks may be affected by random effects
-      expect(result.updatedEnemies[0].burnStacks).toBeGreaterThanOrEqual(4);
+      expect(result.updatedEnemies[0].burnStacks).toBe(4); // With seed 1234, always 4 burn stacks
       expect(result.totalDamageDealt).toBe(expectedDamage);
     });
 
