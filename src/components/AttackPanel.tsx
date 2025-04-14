@@ -124,9 +124,7 @@ export function AttackPanel({ onAttack, selectedEnemy }: Props) {
           <button
             key={attack.type}
             onClick={() => onAttack(attack.type)}
-            disabled={
-              !selectedEnemy && attack.type !== 'flameWave'
-            }
+            disabled={!selectedEnemy && attack.type !== 'flameWave'}
             className={`py-2 px-3 rounded text-white ${attack.color} transition-colors ${
               !selectedEnemy && attack.type !== 'flameWave'
                 ? 'opacity-50 cursor-not-allowed'
@@ -135,16 +133,17 @@ export function AttackPanel({ onAttack, selectedEnemy }: Props) {
             title={`${attack.name}: ${attack.description}`}
           >
             <div className="flex flex-col items-center">
-              <span>{attack.name} {attack.emoji}</span>
+              <span>
+                {attack.name} {attack.emoji}
+              </span>
               <span className="text-xs">
-                {typeof attack.damage === 'number' ? 
-                  `${attack.damage} dmg` : 
-                  attack.damage
-                }, 
-                {typeof attack.burn === 'number' ? 
-                  `${attack.burn} burn` : 
-                  attack.burn
-                }
+                {typeof attack.damage === 'number'
+                  ? `${attack.damage} dmg`
+                  : attack.damage}
+                ,
+                {typeof attack.burn === 'number'
+                  ? `${attack.burn} burn`
+                  : attack.burn}
               </span>
             </div>
           </button>
