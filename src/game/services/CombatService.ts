@@ -2,6 +2,7 @@ import { Enemy, EnemyTier } from '../models/Enemy';
 import { DamageEffect } from '../models/DamageEffect';
 import { BASE_DAMAGE, STATUS_EFFECTS } from '../constants/DamageValues';
 import { capitalize } from '../../utils';
+import { random } from '../../utils/random';
 
 // Interface for the result of an attack
 export interface AttackResult {
@@ -48,7 +49,7 @@ function checkForDeath(enemy: Enemy): { enemy: Enemy; hasDied: boolean } {
  * Rolls a probability check
  */
 function rollProbability(chance: number): boolean {
-  return Math.random() < chance;
+  return random() < chance;
 }
 
 /**
