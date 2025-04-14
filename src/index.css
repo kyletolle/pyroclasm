@@ -1,21 +1,70 @@
+/* Import Tailwind v4 properly */
 @import 'tailwindcss';
+@import 'tailwindcss/preflight';
 
-@layer base {
-  html {
-    @apply bg-white text-black transition-colors duration-200;
-  }
-
-  html.dark {
-    @apply bg-gray-900 text-white;
-  }
-
-  body {
-    @apply min-h-screen;
-  }
+/* Restore base styles that were previously applied by Tailwind */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Use proper Tailwind v4 imports */
-@import "tailwindcss/preflight";
+/* Base styles using proper Tailwind v4 syntax */
+html {
+  background-color: white;
+  color: black;
+  transition-property: color, background-color;
+  transition-duration: 200ms;
+}
+
+html.dark {
+  background-color: rgb(17, 24, 39); /* bg-gray-900 */
+  color: white;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-size: 16px;
+}
+
+h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin-bottom: 0.5em;
+}
+
+h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin-bottom: 0.5em;
+}
+
+h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin-bottom: 0.5em;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
 
 /* Pulse animations */
 @keyframes pulse-ring {
