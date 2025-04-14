@@ -328,13 +328,30 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
       '--current-percentage': healthPercentage,
     } as React.CSSProperties;
 
+    // Determine text color based on health percentage - same as LinearHealthBar
+    const getTextColor = () => {
+      if (isDark) {
+        return healthPercentage <= 25
+          ? 'text-red-300'
+          : healthPercentage <= 60
+            ? 'text-yellow-300'
+            : 'text-green-300';
+      } else {
+        return healthPercentage <= 25
+          ? 'text-red-600'
+          : healthPercentage <= 60
+            ? 'text-yellow-600'
+            : 'text-green-600';
+      }
+    };
+
     return (
       <div className="flex items-center mt-2 justify-between">
         <span
           className={`pie-chart ${needsAnimation ? 'animate-pie-change' : ''}`}
           style={pieStyle}
         ></span>
-        <div className="text-xs flex-1 ml-2">
+        <div className={`text-xs flex-1 ml-2 ${getTextColor()}`}>
           {enemy.hp}/{enemy.maxHp} ({Math.round(healthPercentage)}%)
         </div>
       </div>
