@@ -255,14 +255,48 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
       '--current-width': `${healthPercentage}%`,
     } as React.CSSProperties;
 
+    // Determine text color based on health percentage
+    const getTextColor = () => {
+      if (isDark) {
+        return healthPercentage <= 25
+          ? 'text-red-300'
+          : healthPercentage <= 60
+            ? 'text-yellow-300'
+            : 'text-green-300';
+      } else {
+        return healthPercentage <= 25
+          ? 'text-red-600'
+          : healthPercentage <= 60
+            ? 'text-yellow-600'
+            : 'text-green-600';
+      }
+    };
+
     return (
-      <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
-        <div
-          className={`h-full ${needsAnimation ? 'animate-health-change' : 'health-bar-fill'}`}
-          style={barStyle}
-        ></div>
-        <div className="text-xs text-center mt-1">
-          {enemy.hp}/{enemy.maxHp} ({Math.round(healthPercentage)}%)
+      <div className="mt-2 space-y-1">
+        {/* Health numbers display */}
+        <div className="flex justify-between items-center text-xs">
+          <span className={`font-medium ${getTextColor()}`}>
+            {enemy.hp}/{enemy.maxHp}
+          </span>
+          <span className={`${getTextColor()}`}>
+            {Math.round(healthPercentage)}%
+          </span>
+        </div>
+
+        {/* Health bar with background */}
+        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden relative">
+          <div
+            className={`h-full ${needsAnimation ? 'animate-health-change' : 'health-bar-fill'}`}
+            style={barStyle}
+          ></div>
+
+          {/* For small health changes, show numbers directly on the bar */}
+          {healthPercentage < 15 && (
+            <div className="absolute top-0 left-1 text-[10px] text-white font-bold shadow-sm">
+              {enemy.hp}
+            </div>
+          )}
         </div>
       </div>
     );
