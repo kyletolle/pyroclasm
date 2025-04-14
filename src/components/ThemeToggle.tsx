@@ -21,17 +21,31 @@ export function ThemeToggle({ className = '' }: Props) {
       {isDark ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          fill="none"
           viewBox="0 0 24 24"
-          strokeWidth={1.5}
+          fill="none"
           stroke="currentColor"
+          strokeWidth={1.5}
           className="w-6 h-6"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
-          />
+          {/* Completely different sun design with irregular rays */}
+          <circle cx="12" cy="12" r="3.5" />
+          {/* Diagonal rays */}
+          <line x1="7" y1="7" x2="5" y2="5" strokeLinecap="round" />
+          <line x1="17" y1="7" x2="19" y2="5" strokeLinecap="round" />
+          <line x1="7" y1="17" x2="5" y2="19" strokeLinecap="round" />
+          <line x1="17" y1="17" x2="19" y2="19" strokeLinecap="round" />
+
+          {/* Horizontal and vertical rays with different lengths */}
+          <line x1="12" y1="2" x2="12" y2="4.5" strokeLinecap="round" />
+          <line x1="12" y1="19.5" x2="12" y2="22" strokeLinecap="round" />
+          <line x1="4.5" y1="12" x2="2" y2="12" strokeLinecap="round" />
+          <line x1="19.5" y1="12" x2="22" y2="12" strokeLinecap="round" />
+
+          {/* Additional shorter rays for unique appearance */}
+          <line x1="9" y1="3.5" x2="8" y2="2.5" strokeLinecap="round" />
+          <line x1="15" y1="3.5" x2="16" y2="2.5" strokeLinecap="round" />
+          <line x1="3.5" y1="9" x2="2.5" y2="8" strokeLinecap="round" />
+          <line x1="20.5" y1="9" x2="21.5" y2="8" strokeLinecap="round" />
         </svg>
       ) : (
         <svg
