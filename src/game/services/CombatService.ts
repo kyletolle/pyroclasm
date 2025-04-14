@@ -441,35 +441,35 @@ export function skipTurn(enemies: Enemy[]): SkipTurnResult {
  */
 const ENEMY_REGISTRY = {
   fodder: [
-    { name: 'Imp', baseHp: 50 },
-    { name: 'Kobold', baseHp: 60 },
-    { name: 'Fire Sprite', baseHp: 45 },
-    { name: 'Ember Rat', baseHp: 40 },
-    { name: 'Cinder Bug', baseHp: 35 },
-    { name: 'Ash Elemental', baseHp: 55 },
+    { name: 'Imp', baseHp: 100 }, // Up from 50
+    { name: 'Kobold', baseHp: 120 }, // Up from 60
+    { name: 'Fire Sprite', baseHp: 90 }, // Up from 45
+    { name: 'Ember Rat', baseHp: 80 }, // Up from 40
+    { name: 'Cinder Bug', baseHp: 70 }, // Up from 35
+    { name: 'Ash Elemental', baseHp: 110 }, // Up from 55
   ],
   medium: [
-    { name: 'Goblin', baseHp: 100 },
-    { name: 'Orc', baseHp: 150 },
-    { name: 'Fire Elemental', baseHp: 130 },
-    { name: 'Magma Hound', baseHp: 140 },
-    { name: 'Flame Cultist', baseHp: 110 },
-    { name: 'Lava Guardian', baseHp: 160 },
+    { name: 'Goblin', baseHp: 200 }, // Up from 100
+    { name: 'Orc', baseHp: 300 }, // Up from 150
+    { name: 'Fire Elemental', baseHp: 260 }, // Up from 130
+    { name: 'Magma Hound', baseHp: 280 }, // Up from 140
+    { name: 'Flame Cultist', baseHp: 220 }, // Up from 110
+    { name: 'Lava Guardian', baseHp: 320 }, // Up from 160
   ],
   elite: [
-    { name: 'Dragon Whelp', baseHp: 250 },
-    { name: 'Stone Golem', baseHp: 300 },
-    { name: 'Flame Titan', baseHp: 280 },
-    { name: 'Inferno Mage', baseHp: 240 },
-    { name: 'Molten Giant', baseHp: 320 },
-    { name: 'Hellhound', baseHp: 260 },
+    { name: 'Dragon Whelp', baseHp: 500 }, // Up from 250
+    { name: 'Stone Golem', baseHp: 600 }, // Up from 300
+    { name: 'Flame Titan', baseHp: 560 }, // Up from 280
+    { name: 'Inferno Mage', baseHp: 480 }, // Up from 240
+    { name: 'Molten Giant', baseHp: 640 }, // Up from 320
+    { name: 'Hellhound', baseHp: 520 }, // Up from 260
   ],
   boss: [
-    { name: 'Drakorath the Scorcher', baseHp: 500 },
-    { name: 'Pyromus the Incinerator', baseHp: 550 },
-    { name: 'Cinereus, Lord of Ash', baseHp: 600 },
-    { name: 'Emberstrike the Infernal', baseHp: 650 },
-    { name: 'Vulkaris the Molten King', baseHp: 700 },
+    { name: 'Drakorath the Scorcher', baseHp: 1000 }, // Up from 500
+    { name: 'Pyromus the Incinerator', baseHp: 1100 }, // Up from 550
+    { name: 'Cinereus, Lord of Ash', baseHp: 1200 }, // Up from 600
+    { name: 'Emberstrike the Infernal', baseHp: 1300 }, // Up from 650
+    { name: 'Vulkaris the Molten King', baseHp: 1400 }, // Up from 700
   ],
 };
 
@@ -712,8 +712,8 @@ export function createInitialEnemies(): Enemy[] {
     {
       id: 1,
       name: 'Kobold',
-      hp: 60,
-      maxHp: 60,
+      hp: 120,
+      maxHp: 120,
       burnStacks: 0,
       scorchLevel: 0,
       infernoLevel: 0,
@@ -724,8 +724,8 @@ export function createInitialEnemies(): Enemy[] {
     {
       id: 2,
       name: 'Goblin',
-      hp: 100,
-      maxHp: 100,
+      hp: 200,
+      maxHp: 200,
       burnStacks: 0,
       scorchLevel: 0,
       infernoLevel: 0,
@@ -736,8 +736,8 @@ export function createInitialEnemies(): Enemy[] {
     {
       id: 3,
       name: 'Dragon Whelp',
-      hp: 200,
-      maxHp: 200,
+      hp: 500,
+      maxHp: 500,
       burnStacks: 0,
       scorchLevel: 0,
       infernoLevel: 0,
