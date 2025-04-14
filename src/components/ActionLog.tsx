@@ -25,8 +25,8 @@ export default function ActionLog({ log, onClear }: Props) {
         <button
           onClick={onClear}
           className={`text-sm px-3 py-1 rounded ${
-            isDark 
-              ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+            isDark
+              ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
               : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
           }`}
           title="Clear the action log"
@@ -41,7 +41,9 @@ export default function ActionLog({ log, onClear }: Props) {
         }`}
       >
         {log.length === 0 ? (
-          <li className={`text-sm italic ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+          <li
+            className={`text-sm italic ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
+          >
             No actions recorded yet
           </li>
         ) : (
