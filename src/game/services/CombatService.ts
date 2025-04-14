@@ -508,11 +508,13 @@ export function applyAttack(
     }
 
     const burnStacksToConvert = Math.floor(currentTargetEnemy.burnStacks / 2);
-    const remainingBurnStacks = currentTargetEnemy.burnStacks - burnStacksToConvert;
-    
+    const remainingBurnStacks =
+      currentTargetEnemy.burnStacks - burnStacksToConvert;
+
     // Calculate combustion damage with modifiers from status effects
-    let combustionDamage = burnStacksToConvert * STATUS_EFFECTS.burn.baseDamagePerStack;
-    
+    let combustionDamage =
+      burnStacksToConvert * STATUS_EFFECTS.burn.baseDamagePerStack;
+
     // Apply scorch multiplier if applicable
     if (currentTargetEnemy.scorchLevel > 0) {
       const scorchMultiplier = Math.pow(
@@ -521,7 +523,7 @@ export function applyAttack(
       );
       combustionDamage *= scorchMultiplier;
     }
-    
+
     // Apply inferno multiplier if applicable
     if (currentTargetEnemy.infernoLevel > 0) {
       const infernoMultiplier = Math.pow(
@@ -530,7 +532,7 @@ export function applyAttack(
       );
       combustionDamage *= infernoMultiplier;
     }
-    
+
     // Round the final damage value
     combustionDamage = Math.round(combustionDamage);
 
