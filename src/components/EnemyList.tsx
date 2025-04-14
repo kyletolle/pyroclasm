@@ -21,6 +21,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
       background: '',
       icon: '',
       ringColor: '', // Added for ring pulse color
+      extraClasses: '', // For additional custom styling
     };
 
     if (enemy.isDead) {
@@ -70,12 +71,17 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
       case 'elite':
         return {
           ...baseStyles,
-          border: isDark ? 'border-purple-700' : 'border-purple-300',
-          background: isDark ? 'bg-purple-900 bg-opacity-20' : 'bg-purple-50',
+          border: isDark
+            ? 'border-purple-400 border-2' // Lighter purple border in dark mode
+            : 'border-purple-500',
+          background: isDark
+            ? 'bg-purple-800 bg-opacity-30' // More vibrant background
+            : 'bg-purple-50',
           icon: '⚔️',
           ringColor: isDark
-            ? 'rgba(168, 85, 247, 0.7)'
-            : 'rgba(168, 85, 247, 0.7)', // purple
+            ? 'rgba(216, 180, 254, 0.9)' // Much brighter, more saturated purple for dark mode
+            : 'rgba(168, 85, 247, 0.7)', // Regular purple for light mode
+          extraClasses: isDark ? 'shadow-[0_0_8px_rgba(192,132,252,0.4)]' : '', // Subtle purple glow in dark mode
         };
       case 'boss':
         return {
@@ -193,17 +199,22 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                   '--pulse-color': tierStyles.ringColor,
                 } as React.CSSProperties)
               : {};
-              
+
           // Get arrow color based on enemy tier
           const getArrowColor = () => {
             if (enemy.hasPyroclasm) return 'text-yellow-400';
-            
+
             switch (enemy.tier) {
-              case 'fodder': return 'text-white';
-              case 'medium': return 'text-blue-300';
-              case 'elite': return 'text-purple-300';
-              case 'boss': return 'text-yellow-300';
-              default: return 'text-white';
+              case 'fodder':
+                return 'text-white';
+              case 'medium':
+                return 'text-blue-300';
+              case 'elite':
+                return isDark ? 'text-purple-300' : 'text-purple-500'; // Brighter purple
+              case 'boss':
+                return 'text-yellow-300';
+              default:
+                return 'text-white';
             }
           };
 
@@ -220,7 +231,7 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                   ? isDark
                     ? 'bg-red-800 border-red-400 shadow-md shadow-red-900/50'
                     : 'bg-red-100 border-red-500 shadow-md shadow-red-500/30'
-                  : `${tierStyles.border} ${tierStyles.background}`
+                  : `${tierStyles.border} ${tierStyles.background} ${tierStyles.extraClasses || ''}`
               }`}
               onClick={() => !enemy.isDead && onSelect(enemy)}
               style={customRingStyles}
@@ -230,19 +241,25 @@ export function EnemyList({ enemies, selected, onSelect }: Props) {
                 <div className="flex items-center">
                   {/* Indicator arrow with tier-based color */}
                   {isSelected && !enemy.isDead && (
-                    <span className={`${getArrowColor()} mr-2 pulse-arrow font-bold`}>▶</span>
+                    <span
+                      className={`${getArrowColor()} mr-2 pulse-arrow font-bold`}
+                    >
+                      ▶
+                    </span>
                   )}
 
                   {!enemy.isDead && tierStyles.icon && (
                     <span
-                      className="mr-2"
+                      className={`mr-2 ${enemy.tier === 'elite' && isDark ? 'text-purple-200' : ''}`}
                       title={`${enemy.tier.charAt(0).toUpperCase() + enemy.tier.slice(1)} enemy`}
                     >
                       {tierStyles.icon}
                     </span>
                   )}
 
-                  <span>
+                  <span
+                    className={`${enemy.tier === 'elite' && !enemy.isDead && isDark ? 'text-purple-200' : ''}`}
+                  >
                     {enemy.name}{' '}
                     {enemy.isDead ? (
                       <span className="font-bold">💀 Defeated</span>
