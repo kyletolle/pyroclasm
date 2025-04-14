@@ -1,9 +1,25 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { applyAttack, skipTurn } from './CombatService';
 import { Enemy } from '../models/Enemy';
 import { STATUS_EFFECTS } from '../constants/DamageValues';
+import {
+  enableSeededRandom,
+  disableSeededRandom,
+  resetRandomSeed,
+} from '../../utils/random';
 
 describe('CombatService', () => {
+  // Setup seeded random number generation before each test
+  beforeEach(() => {
+    enableSeededRandom(1234); // Use a fixed seed for all tests
+  });
+
+  // Reset after each test
+  afterEach(() => {
+    disableSeededRandom();
+    resetRandomSeed();
+  });
+
   // Helper to create a test enemy
   const createTestEnemy = (overrides: Partial<Enemy> = {}): Enemy => ({
     id: 1,
@@ -29,6 +45,12 @@ describe('CombatService', () => {
         // Act
         const result = applyAttack(enemies, initialEnemy, 'fire');
 
+        // Log the exact values for our seeded random implementation
+        console.log(
+          'Fire attack burn stacks:',
+          result.updatedEnemies[0].burnStacks
+        );
+
         // Assert
         expect(result.updatedEnemies[0].hp).toBe(97); // 100 - 3 damage
         // Don't strictly test the burn stacks value as it may vary due to randomness
@@ -47,6 +69,10 @@ describe('CombatService', () => {
 
         // Act
         const result = applyAttack(enemies, initialEnemy, 'combustion');
+        console.log(
+          'Combustion attack burn stacks:',
+          result.updatedEnemies[0].burnStacks
+        );
 
         // Assert
         const burnStacksConverted = Math.floor(initialEnemy.burnStacks / 2); // 5
@@ -70,6 +96,10 @@ describe('CombatService', () => {
 
         // Act
         const result = applyAttack(enemies, initialEnemy, 'combustion');
+        console.log(
+          'Combustion (no burn stacks) burn stacks:',
+          result.updatedEnemies[0].burnStacks
+        );
 
         // Assert
         expect(result.message).toContain('Combustion converted to Fire attack');

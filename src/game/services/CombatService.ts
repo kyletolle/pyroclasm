@@ -58,7 +58,7 @@ function rollProbability(chance: number): boolean {
 function getRandomEnemy(enemies: Enemy[], excludeId: number): Enemy | null {
   const liveEnemies = enemies.filter(e => !e.isDead && e.id !== excludeId);
   if (liveEnemies.length === 0) return null;
-  return liveEnemies[Math.floor(Math.random() * liveEnemies.length)];
+  return liveEnemies[Math.floor(random() * liveEnemies.length)];
 }
 
 /**
@@ -832,7 +832,7 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
   for (let i = 0; i < fodderCount; i++) {
     const randomFodder =
       ENEMY_REGISTRY.fodder[
-        Math.floor(Math.random() * ENEMY_REGISTRY.fodder.length)
+        Math.floor(random() * ENEMY_REGISTRY.fodder.length)
       ];
     const hp = Math.round(randomFodder.baseHp * hpMultiplier);
     enemies.push({
@@ -853,7 +853,7 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
   for (let i = 0; i < mediumCount; i++) {
     const randomMedium =
       ENEMY_REGISTRY.medium[
-        Math.floor(Math.random() * ENEMY_REGISTRY.medium.length)
+        Math.floor(random() * ENEMY_REGISTRY.medium.length)
       ];
     const hp = Math.round(randomMedium.baseHp * hpMultiplier);
     enemies.push({
@@ -873,9 +873,7 @@ function generateStandardWave(wave: number, hpMultiplier: number): Enemy[] {
   // Add elite enemies
   for (let i = 0; i < eliteCount; i++) {
     const randomElite =
-      ENEMY_REGISTRY.elite[
-        Math.floor(Math.random() * ENEMY_REGISTRY.elite.length)
-      ];
+      ENEMY_REGISTRY.elite[Math.floor(random() * ENEMY_REGISTRY.elite.length)];
     const hp = Math.round(randomElite.baseHp * hpMultiplier);
     enemies.push({
       id: timeNow + enemies.length,
@@ -937,7 +935,7 @@ function generateBossWave(wave: number, hpMultiplier: number): Enemy[] {
     const tier = i % 2 === 0 ? 'fodder' : 'medium';
     const registry =
       tier === 'fodder' ? ENEMY_REGISTRY.fodder : ENEMY_REGISTRY.medium;
-    const randomMinion = registry[Math.floor(Math.random() * registry.length)];
+    const randomMinion = registry[Math.floor(random() * registry.length)];
     const hp = Math.round(randomMinion.baseHp * hpMultiplier * 0.8); // Minions are slightly weaker
 
     enemies.push({
@@ -973,7 +971,7 @@ export function spawnNextWave(): { enemies: Enemy[]; waveNumber: number } {
  */
 export function spawnRandomEnemy(): Enemy {
   // Determine enemy tier with weighted probability
-  const tierRoll = Math.random();
+  const tierRoll = random();
   let tier: EnemyTier;
 
   if (tierRoll < 0.5) {
@@ -990,14 +988,14 @@ export function spawnRandomEnemy(): Enemy {
   const registry = ENEMY_REGISTRY[tier];
 
   // Select random enemy from tier
-  const randomEnemy = registry[Math.floor(Math.random() * registry.length)];
+  const randomEnemy = registry[Math.floor(random() * registry.length)];
 
   // Apply some randomness to HP based on current wave
   const baseHp = randomEnemy.baseHp;
   const waveMultiplier = 1 + (currentWave - 1) * 0.3; // Less scaling than normal waves
   const hpVariance = 0.2; // 20% variance
   const randomHp = Math.round(
-    baseHp * waveMultiplier * (1 - hpVariance / 2 + Math.random() * hpVariance)
+    baseHp * waveMultiplier * (1 - hpVariance / 2 + random() * hpVariance)
   );
 
   return {
@@ -1025,13 +1023,13 @@ export function createInitialEnemies(): Enemy[] {
   const timeNow = Date.now();
 
   // Select 2-3 fodder enemies for the initial wave
-  const fodderCount = 2 + Math.floor(Math.random() * 2); // 2-3 fodder enemies
+  const fodderCount = 2 + Math.floor(random() * 2); // 2-3 fodder enemies
 
   // Add fodder enemies
   for (let i = 0; i < fodderCount; i++) {
     const randomFodder =
       ENEMY_REGISTRY.fodder[
-        Math.floor(Math.random() * ENEMY_REGISTRY.fodder.length)
+        Math.floor(random() * ENEMY_REGISTRY.fodder.length)
       ];
     const hp = Math.floor(randomFodder.baseHp * 0.8); // Slightly reduced HP for the initial enemies
 
@@ -1050,10 +1048,10 @@ export function createInitialEnemies(): Enemy[] {
   }
 
   // 50% chance to add a medium enemy if we only have 2 fodder enemies
-  if (fodderCount === 2 && Math.random() > 0.5) {
+  if (fodderCount === 2 && random() > 0.5) {
     const randomMedium =
       ENEMY_REGISTRY.medium[
-        Math.floor(Math.random() * ENEMY_REGISTRY.medium.length)
+        Math.floor(random() * ENEMY_REGISTRY.medium.length)
       ];
     const hp = Math.floor(randomMedium.baseHp * 0.7); // Reduced HP for the initial medium enemy
 
